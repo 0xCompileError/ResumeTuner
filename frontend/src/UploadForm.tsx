@@ -50,7 +50,7 @@ const ResumeTunerApp = () => {
     setDownloadReady(false);
 
     try {
-      const response = await fetch(`http://localhost:8000/analyze/?latex=${useLatex}`, {
+      const response = await fetch(`https://resumetuner-backend.onrender.com/analyze/?latex=${useLatex}`, {
         method: "POST",
         body: formData,
       });
