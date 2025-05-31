@@ -82,77 +82,66 @@ const ResumeTunerApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Left column */}
-        <div className="md:col-span-2 space-y-8">
-          <h1 className="text-4xl font-bold tracking-tight">ResumeTuner</h1>
+    <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <h1 className="text-4xl font-bold tracking-tight text-center">ResumeTuner</h1>
 
-          {/* Toggles */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="inline-flex rounded-md shadow-sm" role="group">
-              <button type="button" onClick={() => setUseJobUrl(false)} className={`px-4 py-2 text-sm font-medium border ${!useJobUrl ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-gray-300'} rounded-l-md border-zinc-700`}>Upload File</button>
-              <button type="button" onClick={() => setUseJobUrl(true)} className={`px-4 py-2 text-sm font-medium border ${useJobUrl ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-gray-300'} rounded-r-md border-zinc-700`}>Paste URL</button>
-            </div>
-
-            <div className="inline-flex rounded-md shadow-sm" role="group">
-              <button type="button" onClick={() => setUseLatex(false)} className={`px-4 py-2 text-sm font-medium border ${!useLatex ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-gray-300'} rounded-l-md border-zinc-700`}>Plain Text</button>
-              <button type="button" onClick={() => setUseLatex(true)} className={`px-4 py-2 text-sm font-medium border ${useLatex ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-gray-300'} rounded-r-md border-zinc-700`}>LaTeX</button>
-            </div>
-          </div>
-
-          {/* Inputs */}
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Resume File (.txt)</label>
-              <input type="file" onChange={(e) => setResume(e.target.files?.[0] || null)} className="block w-full text-sm text-white bg-zinc-800 border border-zinc-700 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Job Description</label>
-              {useJobUrl ? (
-                <input type="url" value={jobUrl} onChange={(e) => setJobUrl(e.target.value)} placeholder="Paste URL here" className="block w-full text-sm text-white bg-zinc-800 border border-zinc-700 rounded-lg p-2" />
-              ) : (
-                <input type="file" onChange={(e) => setJob(e.target.files?.[0] || null)} className="block w-full text-sm text-white bg-zinc-800 border border-zinc-700 rounded-lg cursor-pointer" />
-              )}
-            </div>
-            {useLatex && (
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Optional LaTeX Format</label>
-                <input type="file" onChange={(e) => setLatexFormat(e.target.files?.[0] || null)} className="block w-full text-sm text-white bg-zinc-800 border border-zinc-700 rounded-lg cursor-pointer" />
-              </div>
-            )}
-          </div>
+        <div className="flex justify-center gap-4 flex-wrap">
+          <button onClick={() => setUseJobUrl(false)} className={`px-4 py-2 rounded ${!useJobUrl ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300'}`}>Upload File</button>
+          <button onClick={() => setUseJobUrl(true)} className={`px-4 py-2 rounded ${useJobUrl ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300'}`}>Paste URL</button>
+          <button onClick={() => setUseLatex(false)} className={`px-4 py-2 rounded ${!useLatex ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300'}`}>Plain Text</button>
+          <button onClick={() => setUseLatex(true)} className={`px-4 py-2 rounded ${useLatex ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300'}`}>LaTeX</button>
         </div>
 
-        {/* Right column */}
-        <div className="flex flex-col space-y-6 md:mt-10">
+        <div className="bg-white p-6 rounded-lg shadow space-y-4">
+          <h2 className="text-xl font-semibold">Resume</h2>
+          <input type="file" onChange={(e) => setResume(e.target.files?.[0] || null)} className="w-full border rounded px-4 py-2" />
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow space-y-4">
+          <h2 className="text-xl font-semibold">Job Description</h2>
+          {useJobUrl ? (
+            <input type="url" value={jobUrl} onChange={(e) => setJobUrl(e.target.value)} placeholder="Paste URL here" className="w-full border rounded px-4 py-2" />
+          ) : (
+            <input type="file" onChange={(e) => setJob(e.target.files?.[0] || null)} className="w-full border rounded px-4 py-2" />
+          )}
+        </div>
+
+        {useLatex && (
+          <div className="bg-white p-6 rounded-lg shadow space-y-4">
+            <h2 className="text-xl font-semibold">LaTeX Format (Optional)</h2>
+            <input type="file" onChange={(e) => setLatexFormat(e.target.files?.[0] || null)} className="w-full border rounded px-4 py-2" />
+          </div>
+        )}
+
+        <div className="bg-white p-6 rounded-lg shadow space-y-4">
+          <h2 className="text-xl font-semibold">Output</h2>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded text-lg font-semibold disabled:opacity-50"
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded text-lg font-semibold disabled:opacity-50"
           >
             {loading ? <ClipLoader size={24} color="#fff" /> : "Generate Optimized Resume"}
           </button>
 
           {output && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold">Output</h2>
+            <>
               {useLatex ? (
-                <pre className="bg-zinc-800 p-4 rounded overflow-y-auto max-h-[40vh] whitespace-pre-wrap">{output}</pre>
+                <pre className="bg-gray-100 text-gray-800 p-4 rounded max-h-[40vh] overflow-y-auto whitespace-pre-wrap">{output}</pre>
               ) : (
-                <div className="prose prose-invert bg-zinc-800 p-4 rounded max-h-[40vh] overflow-y-auto">
+                <div className="prose bg-gray-100 text-gray-800 p-4 rounded max-h-[40vh] overflow-y-auto">
                   <ReactMarkdown>{output}</ReactMarkdown>
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mt-4">
                 {downloadReady && (
                   <button onClick={handleDownload} className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded text-white">Download .tex</button>
                 )}
                 <button onClick={handleCopy} className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white">Copy</button>
-                <button onClick={resetForm} className="bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded text-white">Reset</button>
+                <button onClick={resetForm} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-white">Reset</button>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
