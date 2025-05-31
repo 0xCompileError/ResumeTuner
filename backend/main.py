@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Form, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, Optional
@@ -8,6 +8,7 @@ import httpx
 import logging
 import uuid
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 from openai import AsyncOpenAI
 from prompts import ResumePrompts
@@ -30,10 +31,18 @@ logger = logging.getLogger(__name__)
 # --- FastAPI App ---
 app = FastAPI(title="ResumeTuner")
 
+def get_origin_header(request: Request):
+    return request.headers.get("origin")
+
+origins = [
+    "https://resume-tuner-two.vercel.app", 
+    "https://resume-tuner-0xcompileerrors-projects.vercel.app", # for production
+    "http://localhost:5173"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://resume-tuner-two.vercel.app", 
-                    "https://resume-tuner-0xcompileerrors-projects.vercel.app"],
+    allow_origin_regex=r"https://.*vercel\.app",  # Accept any vercel.app subdomain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
