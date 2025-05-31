@@ -35,14 +35,13 @@ def get_origin_header(request: Request):
     return request.headers.get("origin")
 
 origins = [
-    "https://resume-tuner-two.vercel.app", 
-    "https://resume-tuner-0xcompileerrors-projects.vercel.app", # for production
-    "http://localhost:5173"
+    "https://resumetuner.app",
+    "http://localhost:5173"  # keep for local development
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://.*vercel\.app",  # Accept any vercel.app subdomain
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
