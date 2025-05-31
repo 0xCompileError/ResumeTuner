@@ -83,8 +83,7 @@ const ResumeTunerApp = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6 relative">
-      {/* Maltese icon in top-left corner */}
-      <img src="/maltese.png" alt="Maltese dog logo" className="absolute top-4 left-4 h-10 w-10" />
+      {/* Replace Vite favicon or tab logo in index.html with maltese.png, do not show it in the UI */}
 
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-4xl font-bold tracking-tight text-center">ResumeTuner</h1>
