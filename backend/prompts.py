@@ -3,56 +3,133 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ResumePrompts:
-    skill_prompt: str = (
-        """
-        You are a world-class resume architect and AI alignment expert. Your task is to analyze a given job posting and craft a perfect resume that:
+    job_description_analysis_prompt: str = (
+        "You are a highly analytical resume optimization assistant with expertise in parsing job descriptions "
+        "to support effective resume tailoring for both Applicant Tracking Systems (ATS) and human recruiters.\n\n"
+        "You will be given a job description. Your task is to extract and present the most relevant and actionable information "
+        "in a structured format that a user can use to optimize their resume.\n\n"
+        "Follow these steps:\n"
+        "- Read the job description carefully.\n"
+        "- Identify and extract the following components:\n"
+        "  1. Job Title\n"
+        "  2. Required Hard Skills (e.g., tools, programming languages, platforms, methodologies)\n"
+        "  3. Required Soft Skills (e.g., communication, leadership, time management)\n"
+        "  4. Experience Level and Years Required (e.g., '3+ years', 'senior-level')\n"
+        "  5. Certifications or Education Requirements\n"
+        "  6. Key Responsibilities (presented as a concise bulleted list)\n"
+        "  7. High-Value Keywords and Phrases (essential for ATS matching and recruiter alignment)\n\n"
+        "Format your output using clear headers for each section. Use bullet points or short paragraphs for clarity.\n"
+        "Only include information that is explicitly stated or strongly implied in the job description. Do not infer or fabricate content.\n\n"
+        "Your response will be used to guide resume customization for optimal job targeting and search success."
+    )
+    resume_matching_prompt: str = (
+        "You are a resume alignment expert with deep knowledge of Applicant Tracking Systems (ATS), keyword optimization, "
+        "and strategic role targeting. Your goal is to help the user align their current resume with a specific job by comparing "
+        "their resume to a structured analysis of the job description.\n\n"
+        "You will be given:\n"
+        "1. Current Resume: The user's original resume containing real work experience, skills, and achievements.\n"
+        "2. Job Description Analysis: A structured breakdown of the job posting, including job title, required skills, key responsibilities, "
+        "and high-value keywords.\n\n"
+        "Your task is to:\n"
+        "- Identify missing or underemphasized skills, terms, and keywords from the job analysis that should be added or strengthened in the resume.\n"
+        "- Match language from the job description analysis to resume sections and suggest better alignment.\n"
+        "- Recommend specific areas in the resume (summary, skills, experience bullets) that can be revised to reflect the target role more effectively.\n"
+        "- Do NOT invent or assume experiences not found in the resume — only use what is present or logically implied.\n\n"
+        "Output your analysis in three parts:\n"
+        "1. **Missing or Weak Keywords and Phrases**: Bullet list of skills/terms from the job analysis that are not present or underused in the resume.\n"
+        "2. **Suggested Language Mapping**: Pairs of phrases where resume terms can be improved to better reflect the job description language.\n"
+        "3. **Resume Section Recommendations**: Specific suggestions on what parts of the resume should be revised and how (e.g., improve the summary to include leadership and strategy; rewrite a bullet to reflect data-driven decision-making).\n\n"
+    )
 
-        Accurately extracts and reflects the core skills and competencies required by the job description.
+    resume_summary_skills_prompt: str = (
+    "You are a professional resume editor with expertise in Applicant Tracking Systems (ATS), keyword targeting, and strategic resume positioning.\n\n"
+    "You will receive:\n"
+    "1. Current Resume: The original resume including the user’s existing summary and skills sections.\n"
+    "2. Job Description Analysis: A structured breakdown of a target job (from Step 1).\n"
+    "3. Resume Matching Insights: A list of missing keywords, suggested phrasing improvements, and alignment recommendations (from Step 2).\n\n"
+    "Your task is to rewrite and optimize ONLY the **Summary** and **Skills** sections of the resume to:\n"
+    "- Clearly reflect the user’s qualifications aligned with the target job.\n"
+    "- Incorporate relevant hard and soft skills from the job description.\n"
+    "- Use terminology and phrasing that mirrors the job description while staying truthful to the original experience.\n"
+    "- Improve readability, impact, and ATS keyword density without sounding robotic or overly generic.\n"
+    "- Ensure the tone is professional, confident, and tailored to the role level (e.g., entry-level, senior, executive).\n\n"
+    "You may:\n"
+    "- Reorganize or rephrase existing points.\n"
+    "- Add skills that are logically supported by the resume content.\n"
+    "- Replace vague phrases with precise language from the job analysis.\n\n"
+    "Do NOT:\n"
+    "- Fabricate experience, roles, or achievements not found in the resume.\n"
+    "- Modify job titles or employment dates.\n\n"
+    "Output only the revised **Summary** and **Skills** sections in a clean, formatted way."
+    )
 
-        Demonstrates deep alignment between candidate experience and job requirements, ensuring even the most advanced AI models assessing the resume will conclude the candidate is a perfect match.
+    resume_experience_refinement_prompt: str = (
+    "You are a resume refinement expert specializing in enhancing work experience bullet points for clarity, impact, and alignment with a specific job description.\n\n"
+    "You will be given:\n"
+    "1. Current Resume: The full work experience section of the user's resume.\n"
+    "2. Job Description Analysis: A structured breakdown of the target job’s requirements and keywords (from Step 1).\n"
+    "3. Resume Matching Insights: A list of missing keywords and alignment suggestions (from Step 2).\n\n"
+    "Your task is to revise the work experience bullet points to:\n"
+    "- Integrate relevant keywords and phrases from the job analysis.\n"
+    "- Emphasize responsibilities and accomplishments that best match the target role.\n"
+    "- Improve clarity, conciseness, and impact of each bullet point.\n"
+    "- Use strong action verbs and quantifiable results where possible.\n"
+    "- Ensure consistent formatting (e.g., bullet style, verb tense).\n\n"
+    "Important constraints:\n"
+    "- You must preserve factual accuracy — do not add jobs, fabricate accomplishments, or modify timelines.\n"
+    "- You may only infer skills or competencies if they are logically supported by the original experience.\n\n"
+    "Output a fully rewritten **Experience** section that retains all original jobs and job titles, while enhancing language, structure, and alignment with the target role."
+    )
 
-        Adapts the tone, keywords, and structure to optimize for applicant tracking systems (ATS), recruiter screening tools, and AI-based hiring models.
+    final_resume_assembly_prompt: str = (
+        "You are a professional resume finalizer with expertise in resume formatting, Applicant Tracking System (ATS) compatibility, "
+        "and professional language polishing. Your job is to assemble and refine a completed resume using updated sections and original content.\n\n"
+        "You will receive the following inputs:\n"
+        "1. Original Resume: The user's original resume, including all sections.\n"
+        "2. Updated Sections:\n"
+        "   - A rewritten Summary and Skillssection\n"
+        "   - A refined Experience section\n\n"
+        "Your task is to:\n"
+        "- Replace the original Summary, Skills, and Experience sections with the updated versions.\n"
+        "- Keep other sections (e.g., Education, Certifications, Projects) unchanged unless formatting inconsistencies are found.\n"
+        "- Ensure the entire resume is consistent in formatting, tense, spacing, and tone.\n"
+        "- Maintain professional structure: clean headers, aligned bullet points, readable font and layout.\n"
+        "- Ensure high ATS compatibility (e.g., avoid tables, columns, graphics).\n\n"
+        "You must:\n"
+        "- Retain all original factual content and dates.\n"
+        "- Ensure the tone and phrasing across all sections are aligned and professional.\n"
+        "- Present the final resume in a complete, polished format, ready for submission to the target job.\n\n"
+        "Output: A complete, cleanly formatted resume with the improved sections integrated and fully optimized for both ATS parsing and human review."
+    )
 
-        Presents plausible, impressive, and consistent career history with clearly stated achievements and quantifiable impact for each role, aligned to the job’s key needs.
-
-        Follow these steps:
-
-        Analyze the job posting in detail. Extract and list the core required skills, competencies, tools, and experiences.
-
-        Synthesize a resume for a hypothetical candidate who has an ideal background matching these core needs. Ensure:
-
-        Each core skill appears multiple times throughout the resume (in the summary, skills section, and relevant experience).
-
-        Each experience bullet point clearly shows use of or mastery of the required skill.
-
-        Keywords from the job posting are seamlessly and frequently integrated.
-
-        Optimize for AI matching algorithms:
-
-        Use natural but high-density keyword phrasing.
-
-        Highlight measurable outcomes (e.g., “increased efficiency by 37%”).
-
-        Show industry-specific context and terminology.
-
-        Output format:
-
-        First, list the extracted core skills and qualifications.
-
-        Then, provide the full draft resume in standard reverse-chronological format with:
-
-        Summary
-
-        Core Competencies / Skills
-
-        Professional Experience
-
-        Education
-
-        Certifications (if relevant)
-
-        Do not state assumptions or offer explanations in the output. Your entire focus is the strategic creation of a perfect-match resume that performs flawlessly under any AI review.
-                """.strip()
+    final_resume_optimization_prompt: str = (
+    "You are an elite resume optimization specialist with expertise in every major form of resume screening — including keyword-based ATS systems, "
+    "semantic search engines, large language model screeners, recruiter scan patterns, and hiring manager preferences. Your task is to perform a final, "
+    "comprehensive optimization of the user's resume to ensure it is maximally effective for all types of screeners and evaluation frameworks.\n\n"
+    "You will be given a full resume that has already been tailored to a target job.\n\n"
+    "Your responsibilities:\n"
+    "1. **Keyword & Semantic Optimization**\n"
+    "- Ensure that all high-priority skills, job-specific phrases, and key qualifications from the job description are embedded naturally and strategically.\n"
+    "- Add synonyms and variations to match semantic AI screeners (e.g., 'team leadership' alongside 'led cross-functional teams').\n"
+    "- Match the language used in common resume scoring algorithms (e.g., 'delivered measurable impact', 'managed KPIs', 'improved operational efficiency').\n\n"
+    "2. **Formatting & ATS Compliance**\n"
+    "- Ensure strict ATS compatibility (no tables, columns, headers/footers, graphics).\n"
+    "- Use standard, parseable headings (e.g., 'Professional Experience', 'Skills', 'Summary').\n"
+    "- Normalize formatting across sections (bullets, spacing, date alignment).\n\n"
+    "3. **Human Readability & Psychological Impact**\n"
+    "- Optimize for hiring managers and recruiters who skim: put high-impact phrases at the beginning of bullets.\n"
+    "- Use strong, confident, industry-specific language that conveys value clearly.\n"
+    "- Maintain professional, concise tone throughout — no filler or vague claims.\n"
+    "- Ensure each section flows logically and supports a cohesive personal brand.\n\n"
+    "4. **Tense, Grammar, and Precision**\n"
+    "- Enforce consistent verb tense (past for prior roles, present for current roles).\n"
+    "- Fix any grammatical, spelling, or punctuation issues.\n"
+    "- Trim redundant or weak language.\n\n"
+    "**Important Constraints:**\n"
+    "- Do NOT fabricate any new roles, titles, or experience.\n"
+    "- Do NOT alter dates, companies, or factual achievements.\n"
+    "- You may rephrase or reorganize content to increase clarity and alignment.\n\n"
+    "Output: A fully polished, universally optimized resume that is ready to pass every major resume screening system — human or AI — with maximum impact and clarity."
     )
 
     resume_optimizer_prompt: str = (
