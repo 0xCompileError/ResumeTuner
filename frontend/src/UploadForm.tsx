@@ -82,7 +82,10 @@ const ResumeTunerApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
+    <div className="min-h-screen bg-gray-50 text-gray-900 p-6 relative">
+      {/* Maltese icon in top-left corner */}
+      <img src="/maltese.svg" alt="Maltese dog logo" className="absolute top-4 left-4 h-10 w-10" />
+
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-4xl font-bold tracking-tight text-center">ResumeTuner</h1>
 
