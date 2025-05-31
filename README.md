@@ -1,6 +1,16 @@
-# 🎯 ResumeTuner – AI-Powered Resume Optimizer (Backend)
+# 🎯 ResumeTuner – AI-Powered Resume Optimizer
 
 **ResumeTuner** is a FastAPI-based backend service that uses OpenAI's GPT-4o-mini model to generate and optimize resumes tailored to specific job descriptions. It helps align resumes with modern hiring systems, including ATS (Applicant Tracking Systems), recruiter filters, and AI resume screeners.
+
+✨ Resume generation from job posting using AI
+
+🧠 Resume optimization for ATS and AI hiring pipelines
+
+📄 Optional LaTeX formatting with downloadable .tex output
+
+🔁 Plain Text vs LaTeX toggle in the frontend
+
+🖥️ User-friendly web interface built with React and Tailwind CSS
 
 ---
 
@@ -8,36 +18,35 @@
 
 ```bash
 git clone https://github.com/0xCompileError/resume-tuner.git
-cd resume-tuner/backend
+cd resume-tuner
 ```
 
-## 📦 2. Install Requirements
+## 🖥️ 2. Backend Setup (FastAPI)
+
+#### ✅ 2.1 Create a virtual environment and install dependencies
 ```bash
+cd backend
 python -m venv venv
 source venv/bin/activate   # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## 📝 3. Add Required Input Files
-Place the following files in the project folder or upload them via the API/UI:
-
-- resume.txt – your current resume with real job experiences
-- job.txt – the job description or posting you want to target
-- format_template.txt (optional) – a LaTeX formatting example that will guide the structure of the output
-
-## 🔐 4. Set Up Your API Key
+#### 🔐 2.2 Set Up Your API Key
 Create a .env file in the backend root:
 ```bash
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-## ▶️ 5. Run the API Server
+#### ▶️ 2.3 Run the API Server
 Use the included Makefile for easy startup:
 ```bash
 make run
 ```
+The server will be available at http://127.0.0.1:8000.
 
-## ✨ 6. Example of CLI
+Swagger docs: http://127.0.0.1:8000/docs
+
+#### ✨ 2.4 Example of CLI
 ```bash 
 curl -X POST "http://127.0.0.1:8000/analyze/?latex=true" \
   -F "resume=@resume.txt" \
@@ -45,9 +54,32 @@ curl -X POST "http://127.0.0.1:8000/analyze/?latex=true" \
   -F "latex_format=@format_template.txt"
 ```
 
+## 🌐 3. Frontend Setup (React + Vite + Tailwind CSS)
 
-## 📬 7. Contributions & Support
+#### ✅ 3.1 Install dependencies
+```bash
+cd ../frontend
+npm install
+```
+
+#### ▶️ 3.2 Run the development server
+```bash
+npm run dev
+```
+The frontend will be available at http://localhost:5173.
+
+## 📝 4. Required Input Files
+You can upload these via the UI or using the API:
+
+- **resume.txt**: *Your current resume (factual work experience)*
+
+- **job.txt**: *The job description for the role you’re targeting*
+
+- **format_template.txt** (optional): *A LaTeX template to style the generated output*
+
+
+## 📬 5. Contributions & Support
 Feel free to open an issue or submit a pull request with improvements. Feature ideas, bug reports, and feedback are always welcome!
 
-## 📄 8. License
+## 📄 6. License
 MIT License © 2025 – 0xCompileError

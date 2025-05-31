@@ -8,6 +8,7 @@ import os
 import openai
 from prompts import ResumePrompts
 from typing import Optional
+from fastapi.middleware.cors import CORSMiddleware
 
 # Setup logging
 logging.basicConfig(
@@ -25,9 +26,14 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-logger.info(openai.api_key)
-
 app = FastAPI(title="ResumeTuner")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # React frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # In-memory store for uploaded files: {file_id: file_content}
 memory_store: Dict[str, str] = {}
@@ -72,9 +78,13 @@ async def analyze_resume_and_job(
     ),
     latex_format: Optional[UploadFile] = File(None),
 ):
-    if resume.filename != "resume.txt" or job.filename != "job.txt":
+    if not resume.filename.endswith(".txt"): 
         raise HTTPException(
-            status_code=400, detail="Expected 'resume.txt' and 'job.txt'"
+            status_code=400, detail="Expected 'resume.txt'"
+        )
+    if not job.filename.endswith(".txt"): 
+        raise HTTPException(
+            status_code=400, detail="Expected 'job.txt'"
         )
 
     resume_text = (await resume.read()).decode("utf-8")
@@ -101,7 +111,9 @@ async def analyze_resume_and_job(
             model="gpt-4o-mini", messages=messages_generate, temperature=0.2
         )
         ideal_resume = response_generate.choices[0].message.content
-
+        logger.info('OpenAI Call 1 completed')
+        
+        
         # 2. Optimize the original resume using the AI one
         optimizer_prompt = prompts.resume_optimizer_prompt
         if latex:
@@ -119,7 +131,10 @@ async def analyze_resume_and_job(
             model="gpt-4o-mini", messages=messages_optimize, temperature=0.3
         )
         optimized_resume = response_optimize.choices[0].message.content
-
+        logger.info('OpenAI Call 2 completed')
+        
+        logger.info(f'{optimized_resume}')
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
 
