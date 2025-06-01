@@ -36,6 +36,7 @@ def get_origin_header(request: Request):
 
 origins = [
     "https://resumetuner.app",
+    "https://www.resumetuner.app",
     "http://localhost:5173"  # keep for local development
 ]
 
