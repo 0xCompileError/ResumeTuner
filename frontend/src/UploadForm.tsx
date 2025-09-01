@@ -4,7 +4,7 @@ import { ClipLoader } from "react-spinners";
 import Toast from "./Toast";
 
 const ResumeTunerApp = () => {
-  const API_BASE = (import.meta as any).env?.VITE_API_BASE || "";
+  const API_BASE = (import.meta as any).env?.VITE_API_BASE || "/api";
   const [resume, setResume] = useState<File | null>(null);
   const [job, setJob] = useState<File | null>(null);
   const [jobUrl, setJobUrl] = useState("");
