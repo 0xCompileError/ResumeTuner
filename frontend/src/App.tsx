@@ -16,7 +16,7 @@ type OptimizeResponse = {
 function Nav() {
   return (
     <nav className="topnav" aria-label="Primary">
-      <div className="brand">ResumeTuner</div>
+      <a href="#/" className="brand" aria-label="Go to home">ResumeTuner</a>
       <div className="links">
         <a href="#/how" className="link">How it works</a>
         <a href="#/example" className="link">See an example</a>
