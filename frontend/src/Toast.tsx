@@ -1,5 +1,3 @@
-import React from "react";
-
 type Props = {
   message: string;
   show: boolean;
@@ -12,4 +10,3 @@ export default function Toast({ message, show }: Props) {
     </div>
   );
 }
-
