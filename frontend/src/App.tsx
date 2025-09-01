@@ -45,6 +45,9 @@ function Landing() {
           {" "}
           <mark className="soft-underline">match what recruiters and ATS scan for.</mark>
         </p>
+        <p className="hero-sub text-balance" aria-label="Why not ChatGPT?">
+          Why not ChatGPT? Our AI models are not another chatbot — they are a resume specialist.
+        </p>
         <div className="hero-actions">
           <a
             href="#/optimize"
