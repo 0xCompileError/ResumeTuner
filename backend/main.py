@@ -120,7 +120,7 @@ async def _run_resume_pipeline(
 
     # --- Step 2: Analyze the Job Description ---
     step1 = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-5-nano",
         messages=[
             {"role": "system", "content": prompts.job_description_analysis_prompt},
             {"role": "user", "content": f"Job:\n{job_text}"},
@@ -132,7 +132,7 @@ async def _run_resume_pipeline(
 
     # --- Step 3: Resume Matching ---
     step2 = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-5-nano",
         messages=[
             {"role": "system", "content": prompts.resume_matching_prompt},
             {
@@ -147,7 +147,7 @@ async def _run_resume_pipeline(
 
     # --- Step 4: Rewrite Summary & Skills ---
     step3 = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-5-nano",
         messages=[
             {"role": "system", "content": prompts.resume_summary_skills_prompt},
             {
@@ -162,7 +162,7 @@ async def _run_resume_pipeline(
 
     # --- Step 5: Refine Experience Section ---
     step4 = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-5-nano",
         messages=[
             {
                 "role": "system",
@@ -180,7 +180,7 @@ async def _run_resume_pipeline(
 
     # --- Step 6: Assemble Final Resume ---
     step5 = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-5-nano",
         messages=[
             {"role": "system", "content": prompts.final_resume_assembly_prompt},
             {
@@ -195,7 +195,7 @@ async def _run_resume_pipeline(
 
     # --- Step 7: Optimize for All Screeners ---
     step6 = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-5-nano",
         messages=[
             {"role": "system", "content": prompts.final_resume_optimization_prompt},
             {
@@ -212,7 +212,7 @@ async def _run_resume_pipeline(
     if latex:
         format_prompt = f"Format the resume in LaTeX using this style:\n{latex_template}"
         latex_result = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano",
             messages=[
                 {"role": "system", "content": format_prompt},
                 {"role": "user", "content": f"Current Version:\n{optimized_resume}"},
