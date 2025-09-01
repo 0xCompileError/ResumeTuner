@@ -1,42 +1,154 @@
-#root {
-  max-width: 1280px;
+/* ====== OpenAI-like dark theme ====== */
+:root {
+  --radius: 18px;
+  --border-w: 1px;
+
+  /* palette */
+  --bg: #0a0a0a;        /* page background */
+  --text: #e7e7e7;      /* primary text */
+  --muted: #9aa0a6;     /* secondary text */
+  --surface: #141414;   /* cards / output */
+  --surface-2: #1a1a1a; /* inputs */
+  --border: #2a2a2a;    /* subtle borders */
+  --btn: #222222;       /* pill button */
+  --btn-hover: #2e2e2e; /* hover */
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+    "Segoe UI Emoji";
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.page {
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* top area: two boxes side-by-side, stack on small screens */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field-title { font-weight: 600; color: var(--muted); }
+
+.textarea {
+  min-height: 260px;
+  resize: vertical;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: var(--border-w) solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  outline: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.textarea::placeholder { color: #6b6b6b; }
+
+.textarea:focus {
+  border-color: #3a3a3a;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
 }
 
-.card {
-  padding: 2em;
+/* centered pill button spanning the grid */
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
 }
 
-.read-the-docs {
-  color: #888;
+.primary {
+  appearance: none;
+  border-radius: 9999px;
+  padding: 16px 22px;
+  background: var(--btn);
+  color: var(--text);
+  border: var(--border-w) solid var(--border);
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 320px;
+  transition: background 120ms ease, transform 50ms ease;
+}
+
+.primary:hover { background: var(--btn-hover); }
+.primary:active { transform: translateY(1px); }
+.primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* output area */
+.output { display: flex; flex-direction: column; gap: 8px; }
+.output-title { color: var(--muted); font-weight: 600; }
+
+.output-wrap { position: relative; }
+
+.output-box {
+  min-height: 320px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 16px;
+  border-radius: var(--radius);
+  border: var(--border-w) solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--btn);
+  color: var(--text);
+  border: var(--border-w) solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.copy-btn:hover { background: var(--btn-hover); opacity: 1; }
+.copy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* responsive: stack textareas on small screens */
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .primary { width: 100%; }
+}
+
+/* Toast / Snackbar */
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  background: rgba(26, 26, 26, 0.95);
+  color: var(--text);
+  border: var(--border-w) solid var(--border);
+  padding: 10px 14px;
+  border-radius: 12px;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 150ms ease, transform 150ms ease;
+  z-index: 9999;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
 }

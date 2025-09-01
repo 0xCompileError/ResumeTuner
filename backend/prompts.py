@@ -87,7 +87,7 @@ class ResumePrompts:
         "You will receive the following inputs:\n"
         "1. Original Resume: The user's original resume, including all sections.\n"
         "2. Updated Sections:\n"
-        "   - A rewritten Summary and Skillssection\n"
+        "   - A rewritten Summary and Skills section\n"
         "   - A refined Experience section\n\n"
         "Your task is to:\n"
         "- Replace the original Summary, Skills, and Experience sections with the updated versions.\n"
@@ -95,11 +95,16 @@ class ResumePrompts:
         "- Ensure the entire resume is consistent in formatting, tense, spacing, and tone.\n"
         "- Maintain professional structure: clean headers, aligned bullet points, readable font and layout.\n"
         "- Ensure high ATS compatibility (e.g., avoid tables, columns, graphics).\n\n"
+        "Plain text formatting requirements (for easy copy/paste to Google Docs):\n"
+        "- Do NOT use Markdown, asterisks, backticks, or decorative separators.\n"
+        "- Use ALL-CAPS section headers: SUMMARY, SKILLS, EXPERIENCE, EDUCATION, CERTIFICATIONS, PROJECTS.\n"
+        "- Put contact details on one line under the name, separated by ' | '.\n"
+        "- Use simple hyphen bullets '- ' for lists.\n"
+        "- Use blank lines between sections.\n\n"
         "You must:\n"
         "- Retain all original factual content and dates.\n"
-        "- Ensure the tone and phrasing across all sections are aligned and professional.\n"
-        "- Present the final resume in a complete, polished format, ready for submission to the target job.\n\n"
-        "Output: A complete, cleanly formatted resume with the improved sections integrated and fully optimized for both ATS parsing and human review."
+        "- Ensure tone and phrasing across all sections are aligned and professional.\n"
+        "- Output ONLY the final resume content in plain text — no extra commentary.\n"
     )
 
     final_resume_optimization_prompt: str = (
@@ -129,7 +134,13 @@ class ResumePrompts:
     "- Do NOT fabricate any new roles, titles, or experience.\n"
     "- Do NOT alter dates, companies, or factual achievements.\n"
     "- You may rephrase or reorganize content to increase clarity and alignment.\n\n"
-    "Output: A fully polished, universally optimized resume that is ready to pass every major resume screening system — human or AI — with maximum impact and clarity."
+    "Plain text formatting requirements (for easy copy/paste to Google Docs):\n"
+    "- Do NOT use Markdown, asterisks, backticks, or decorative separators.\n"
+    "- Use ALL-CAPS section headers: SUMMARY, SKILLS, EXPERIENCE, EDUCATION, CERTIFICATIONS, PROJECTS.\n"
+    "- Put contact details on one line under the name, separated by ' | '.\n"
+    "- Use simple hyphen bullets '- ' for lists.\n"
+    "- Use blank lines between sections.\n\n"
+    "Output ONLY the final resume content in plain text (no explanations)."
     )
 
     resume_optimizer_prompt: str = (

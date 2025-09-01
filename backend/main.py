@@ -1,14 +1,14 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Form, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import httpx
 import logging
 import uuid
 import os
-from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from openai import AsyncOpenAI
 from prompts import ResumePrompts
@@ -34,11 +34,17 @@ app = FastAPI(title="ResumeTuner")
 def get_origin_header(request: Request):
     return request.headers.get("origin")
 
-origins = [
+default_origins = [
     "https://resumetuner.app",
     "https://www.resumetuner.app",
-    "http://localhost:5173"  # keep for local development
+    "http://localhost:5173",  # local development
 ]
+
+# Allow overriding origins via env var CORS_ALLOW_ORIGINS (comma-separated)
+_env_origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+origins: List[str] = (
+    [o.strip() for o in _env_origins.split(",") if o.strip()] if _env_origins else default_origins
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -86,7 +92,10 @@ async def upload_txt_file(file: UploadFile = File(...)):
 
     file_id = str(uuid.uuid4())
     memory_store[file_id] = decoded
-    logger.info(f"Uploaded {file.filename} | ID: {file_id}\n{decoded}")
+    # Avoid logging file contents to protect sensitive data
+    logger.info(
+        f"Uploaded {file.filename} | ID: {file_id} | size={len(decoded)} chars"
+    )
     return {"message": "Upload successful", "file_id": file_id}
 
 
@@ -99,6 +108,122 @@ async def get_file_content(file_id: str):
     return JSONResponse(content={"file_id": file_id, "content": content})
 
 
+# --- Shared pipeline helper ---
+async def _run_resume_pipeline(
+    resume_text: str,
+    job_text: str,
+    *,
+    latex: bool = False,
+    latex_template: str = "",
+):
+    prompts = ResumePrompts()
+
+    # --- Step 2: Analyze the Job Description ---
+    step1 = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompts.job_description_analysis_prompt},
+            {"role": "user", "content": f"Job:\n{job_text}"},
+        ],
+        temperature=0.2,
+    )
+    job_analysis = step1.choices[0].message.content
+    logger.info("Step 1: Job Description Analysis Complete")
+
+    # --- Step 3: Resume Matching ---
+    step2 = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompts.resume_matching_prompt},
+            {
+                "role": "user",
+                "content": f"Current Resume:\n{resume_text}\n\nJob Description Analysis:\n{job_analysis}",
+            },
+        ],
+        temperature=0.2,
+    )
+    matching_analysis = step2.choices[0].message.content
+    logger.info("Step 2: Resume Matching Complete")
+
+    # --- Step 4: Rewrite Summary & Skills ---
+    step3 = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompts.resume_summary_skills_prompt},
+            {
+                "role": "user",
+                "content": f"Current Resume:\n{resume_text}\n\nJob Description Analysis:\n{job_analysis}\n\nResume Matching Insights:\n{matching_analysis}",
+            },
+        ],
+        temperature=0.2,
+    )
+    summary_skills = step3.choices[0].message.content
+    logger.info("Step 3: Summary & Skills Rewrite Complete")
+
+    # --- Step 5: Refine Experience Section ---
+    step4 = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": prompts.resume_experience_refinement_prompt,
+            },
+            {
+                "role": "user",
+                "content": f"Current Resume:\n{resume_text}\n\nJob Description Analysis:\n{job_analysis}\n\nResume Matching Insights:\n{matching_analysis}",
+            },
+        ],
+        temperature=0.2,
+    )
+    experience_section = step4.choices[0].message.content
+    logger.info("Step 4: Experience Rewrite Complete")
+
+    # --- Step 6: Assemble Final Resume ---
+    step5 = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompts.final_resume_assembly_prompt},
+            {
+                "role": "user",
+                "content": f"Summary and Skills section:\n{summary_skills}\n\nExperience section:\n{experience_section}",
+            },
+        ],
+        temperature=0.2,
+    )
+    final_resume = step5.choices[0].message.content
+    logger.info("Step 5: Resume Assembly Complete")
+
+    # --- Step 7: Optimize for All Screeners ---
+    step6 = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompts.final_resume_optimization_prompt},
+            {
+                "role": "user",
+                "content": f"Full Resume:\n{final_resume}\n\nJob Description Analysis:\n{job_analysis}",
+            },
+        ],
+        temperature=0.2,
+    )
+    optimized_resume = step6.choices[0].message.content
+    logger.info("Step 6: Final Optimization Complete")
+
+    # --- Optional: LaTeX Formatting ---
+    if latex:
+        format_prompt = f"Format the resume in LaTeX using this style:\n{latex_template}"
+        latex_result = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": format_prompt},
+                {"role": "user", "content": f"Current Version:\n{optimized_resume}"},
+            ],
+            temperature=0.3,
+        )
+        return {"latex": True, "content": latex_result.choices[0].message.content}
+
+    return {"latex": False, "content": optimized_resume}
+
+
 # --- Resume Analyzer ---
 @app.post("/analyze/")
 async def analyze_resume_and_job(
@@ -107,9 +232,9 @@ async def analyze_resume_and_job(
     latex_format: Optional[UploadFile] = File(None),
     job_url: Optional[str] = Form(None),
     latex: bool = Query(default=False, description="Return LaTeX formatted output"),
+    plain: bool = Query(default=False, description="If true, return text/plain"),
+    request: Request = None,
 ):
-    prompts = ResumePrompts()
-
     try:
         # --- Step 0: Read Resume ---
         resume_text = (await resume.read()).decode("utf-8")
@@ -145,122 +270,53 @@ async def analyze_resume_and_job(
                     status_code=400, detail="Could not read LaTeX template."
                 )
 
-        # --- Step 2: Analyze the Job Description ---
-        step1 = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": prompts.job_description_analysis_prompt},
-                {"role": "user", "content": f"Job:\n{job_text}"},
-            ],
-            temperature=0.2,
+        result = await _run_resume_pipeline(
+            resume_text=resume_text,
+            job_text=job_text,
+            latex=latex,
+            latex_template=latex_template,
         )
-        job_analysis = step1.choices[0].message.content
-        logger.info("Step 1: Job Description Analysis Complete")
 
-        # --- Step 3: Resume Matching ---
-        step2 = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": prompts.resume_matching_prompt},
-                {
-                    "role": "user",
-                    "content": f"Current Resume:\n{resume_text}\n\nJob Description Analysis:\n{job_analysis}",
-                },
-            ],
-            temperature=0.2,
-        )
-        matching_analysis = step2.choices[0].message.content
-        logger.info("Step 2: Resume Matching Complete")
-
-        # --- Step 4: Rewrite Summary & Skills ---
-        step3 = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": prompts.resume_summary_skills_prompt},
-                {
-                    "role": "user",
-                    "content": f"Current Resume:\n{resume_text}\n\nJob Description Analysis:\n{job_analysis}\n\nResume Matching Insights:\n{matching_analysis}",
-                },
-            ],
-            temperature=0.2,
-        )
-        summary_skills = step3.choices[0].message.content
-        logger.info("Step 3: Summary & Skills Rewrite Complete")
-
-        # --- Step 5: Refine Experience Section ---
-        step4 = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": prompts.resume_experience_refinement_prompt,
-                },
-                {
-                    "role": "user",
-                    "content": f"Current Resume:\n{resume_text}\n\nJob Description Analysis:\n{job_analysis}\n\nResume Matching Insights:\n{matching_analysis}",
-                },
-            ],
-            temperature=0.2,
-        )
-        experience_section = step4.choices[0].message.content
-        logger.info("Step 4: Experience Rewrite Complete")
-
-        # --- Step 6: Assemble Final Resume ---
-        step5 = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": prompts.final_resume_assembly_prompt},
-                {
-                    "role": "user",
-                    "content": f"Summary and Skills section:\n{summary_skills}\n\nExperience section:\n{experience_section}",
-                },
-            ],
-            temperature=0.2,
-        )
-        final_resume = step5.choices[0].message.content
-        logger.info("Step 5: Resume Assembly Complete")
-
-        # --- Step 7: Optimize for All Screeners ---
-        step6 = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": prompts.final_resume_optimization_prompt},
-                {
-                    "role": "user",
-                    "content": f"Full Resume:\n{final_resume}\n\nJob Description Analysis:\n{job_analysis}",
-                },
-            ],
-            temperature=0.2,
-        )
-        optimized_resume = step6.choices[0].message.content
-        logger.info("Step 6: Final Optimization Complete")
-
-        # --- Optional: LaTeX Formatting ---
-        if latex:
-            format_prompt = f'Format the resume in LaTeX using this style:\n{latex_template}'
-            latex_result = await client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": format_prompt},
-                    {
-                        "role": "user",
-                        "content": f"Current Version:\n{optimized_resume}",
-                    },
-                ],
-                temperature=0.3,
-            )
+        if result.get("latex"):
             return PlainTextResponse(
-                content=latex_result.choices[0].message.content,
+                content=result["content"],
                 media_type="application/x-latex",
                 headers={
                     "Content-Disposition": 'attachment; filename="optimized_resume.tex"'
                 },
             )
 
-        return JSONResponse(content={"optimized_resume": optimized_resume})
+        accept = (request.headers.get("accept") or "").lower() if request else ""
+        if plain or "text/plain" in accept:
+            return PlainTextResponse(content=result["content"], media_type="text/plain")
+
+        return JSONResponse(content={"optimized_resume": result["content"]})
 
     except Exception as e:
         logger.exception("Resume optimization workflow failed.")
         raise HTTPException(
             status_code=500, detail=f"Failed to complete resume analysis: {str(e)}"
+        )
+
+
+# --- JSON Optimize Endpoint ---
+class OptimizeRequest(BaseModel):
+    resume: str
+    jobDescription: str
+
+
+@app.post("/optimize")
+async def optimize_json(payload: OptimizeRequest, request: Request, plain: bool = Query(default=False)):
+    try:
+        result = await _run_resume_pipeline(
+            resume_text=payload.resume, job_text=payload.jobDescription, latex=False
+        )
+        accept = (request.headers.get("accept") or "").lower()
+        if plain or "text/plain" in accept:
+            return PlainTextResponse(content=result["content"], media_type="text/plain")
+        return JSONResponse(content={"optimized_resume": result["content"]})
+    except Exception as e:
+        logger.exception("JSON optimize workflow failed.")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to optimize resume: {str(e)}"
         )

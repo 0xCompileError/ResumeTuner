@@ -29,6 +29,8 @@ Place the following files in the project folder or upload them via the API/UI:
 Create a .env file in the backend root:
 ```bash
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Optionally override allowed CORS origins (comma-separated)
+CORS_ALLOW_ORIGINS=https://your-frontend.example.com,http://localhost:5173
 ```
 
 ## ▶️ 5. Run the API Server
@@ -43,6 +45,14 @@ curl -X POST "http://127.0.0.1:8000/analyze/?latex=true" \
   -F "resume=@resume.txt" \
   -F "job=@job.txt" \
   -F "latex_format=@format_template.txt"
+```
+
+You can also POST JSON to `/optimize` (used by the sample React app):
+
+```bash
+curl -X POST "http://127.0.0.1:8000/optimize" \
+  -H "Content-Type: application/json" \
+  -d '{"resume": "...", "jobDescription": "..."}'
 ```
 
 

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { ClipLoader } from "react-spinners";
+import Toast from "./Toast";
 
 const ResumeTunerApp = () => {
+  const API_BASE = (import.meta as any).env?.VITE_API_BASE || "";
   const [resume, setResume] = useState<File | null>(null);
   const [job, setJob] = useState<File | null>(null);
   const [jobUrl, setJobUrl] = useState("");
@@ -12,6 +14,8 @@ const ResumeTunerApp = () => {
   const [output, setOutput] = useState("");
   const [downloadReady, setDownloadReady] = useState(false);
   const [useLatex, setUseLatex] = useState(false);
+  const [toast, setToast] = useState("");
+  const [showToast, setShowToast] = useState(false);
 
   const resetForm = () => {
     setResume(null);
@@ -27,9 +31,13 @@ const ResumeTunerApp = () => {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(output);
-      alert("Output copied to clipboard.");
+      setToast("Copied to clipboard");
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 1500);
     } catch {
-      alert("Failed to copy.");
+      setToast("Failed to copy");
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 1500);
     }
   };
 
@@ -48,24 +56,40 @@ const ResumeTunerApp = () => {
     setLoading(true);
     setOutput("");
     setDownloadReady(false);
+    // Announce start
+    setToast("Optimization started…");
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 1500);
 
     try {
-      const response = await fetch(`https://resumetuner-backend.onrender.com/analyze/?latex=${useLatex}`, {
+      const response = await fetch(`${API_BASE}/analyze/?latex=${useLatex}&plain=${!useLatex}`, {
         method: "POST",
+        headers: { Accept: useLatex ? "application/x-latex, text/plain" : "text/plain, application/json" },
         body: formData,
       });
       if (!response.ok) throw new Error(await response.text());
 
+      const ct = response.headers.get("content-type") || "";
       if (useLatex) {
         const latexText = await response.text();
         setOutput(latexText);
         setDownloadReady(true);
+      } else if (ct.includes("text/plain")) {
+        const text = await response.text();
+        setOutput(text);
       } else {
         const data = await response.json();
         setOutput(data.optimized_resume || "No result found.");
       }
+      // Announce completion
+      setToast("Optimization complete");
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 1500);
     } catch (error: any) {
       setOutput("Something went wrong:\n" + error.message);
+      setToast("Optimization failed");
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 1800);
     } finally {
       setLoading(false);
     }
@@ -82,11 +106,28 @@ const ResumeTunerApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 p-6 relative">
+    <div className="min-h-screen bg-gray-50 text-gray-900 p-6 relative" aria-busy={loading}>
       {/* Replace Vite favicon or tab logo in index.html with maltese.png, do not show it in the UI */}
 
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-4xl font-bold tracking-tight text-center">ResumeTuner</h1>
+        {/* Accessible live region for screen readers */}
+        <span
+          aria-live="polite"
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            padding: 0,
+            margin: -1,
+            overflow: "hidden",
+            clip: "rect(0, 0, 0, 0)",
+            whiteSpace: "nowrap",
+            border: 0,
+          }}
+        >
+          {loading ? "Optimizing your resume…" : "Ready"}
+        </span>
 
         <div className="flex justify-center gap-4 flex-wrap">
           <button onClick={() => setUseJobUrl(false)} className={`px-4 py-2 rounded ${!useJobUrl ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300'}`}>Upload File</button>
@@ -128,25 +169,48 @@ const ResumeTunerApp = () => {
 
           {output && (
             <>
-              {useLatex ? (
-                <pre className="bg-gray-100 text-gray-800 p-4 rounded max-h-[40vh] overflow-y-auto whitespace-pre-wrap">{output}</pre>
-              ) : (
-                <div className="prose bg-gray-100 text-gray-800 p-4 rounded max-h-[40vh] overflow-y-auto">
-                  <ReactMarkdown>{output}</ReactMarkdown>
-                </div>
-              )}
+              <div className="relative">
+                <button
+                  onClick={handleCopy}
+                  className="absolute top-2 right-2 bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded text-white text-sm"
+                  aria-label="Copy output to clipboard"
+                  title="Copy output"
+                >
+                  Copy
+                </button>
+                {useLatex ? (
+                  <pre className="bg-gray-100 text-gray-800 p-4 rounded max-h-[40vh] overflow-y-auto whitespace-pre-wrap">{output}</pre>
+                ) : (
+                  <div className="prose bg-gray-100 text-gray-800 p-4 rounded max-h-[40vh] overflow-y-auto">
+                    <ReactMarkdown>{output}</ReactMarkdown>
+                  </div>
+                )}
+              </div>
 
               <div className="flex flex-wrap gap-2 mt-4">
                 {downloadReady && (
                   <button onClick={handleDownload} className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded text-white">Download .tex</button>
                 )}
-                <button onClick={handleCopy} className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white">Copy</button>
                 <button onClick={resetForm} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-white">Reset</button>
               </div>
             </>
           )}
-        </div>
       </div>
+      </div>
+      <Toast message={toast} show={showToast} />
+      {loading && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Optimizing your resume">
+          <div className="bg-white text-gray-900 rounded-xl shadow-lg p-6 w-[92%] max-w-md text-center border border-gray-200">
+            <div className="mb-3 flex justify-center">
+              <ClipLoader size={28} color="#2563eb" />
+            </div>
+            <div className="text-lg font-semibold">Optimizing your resume…</div>
+            <div className="text-sm text-gray-600 mt-1">
+              This can take 30–90 seconds. Please don’t close the tab.
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
