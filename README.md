@@ -6,10 +6,6 @@
 
 🧠 Resume optimization for ATS and AI hiring pipelines
 
-📄 Optional LaTeX formatting with downloadable .tex output
-
-🔁 Plain Text vs LaTeX toggle in the frontend
-
 🖥️ User-friendly web interface built with React and Tailwind CSS
 
 ---
@@ -64,22 +60,22 @@ npm install
 
 #### ▶️ 3.2 Run the development server
 ```bash
-npm run dev
+VITE_API_BASE=http://127.0.0.1:8000 npm run dev
 ```
 The frontend will be available at http://localhost:5173.
 
-## 📝 4. Required Input Files
+<!-- ##  4. Required Input Files
 You can upload these via the UI or using the API:
 
 - **resume.txt**: *Your current resume (factual work experience)*
 
 - **job.txt**: *The job description for the role you’re targeting*
 
-- **format_template.txt** (optional): *A LaTeX template to style the generated output*
+- **format_template.txt** (optional): *A LaTeX template to style the generated output* -->
 
 
-## 📬 5. Contributions & Support
+## 📬 4. Contributions & Support
 Feel free to open an issue or submit a pull request with improvements. Feature ideas, bug reports, and feedback are always welcome!
 
-## 📄 6. License
+## 📄 5. License
 MIT License © 2025 – 0xCompileError
