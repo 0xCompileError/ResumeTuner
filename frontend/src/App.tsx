@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import "./App.css";
 import Toast from "./Toast";
 import { ClipLoader } from "react-spinners";
+import { track } from "@vercel/analytics";
 const WebglCameraExample = lazy(() => import("./WebglCameraExample"));
 
 const API_BASE = import.meta.env.VITE_API_BASE || "/api";
@@ -187,6 +188,7 @@ function Landing() {
             href="/optimize"
             className="cta-primary-lift"
             aria-label="Go to optimizer"
+            onClick={() => { try { track('cta_click', { source: 'hero_optimize' }); } catch {} }}
           >
             Optimize my resume
             <svg
@@ -288,6 +290,7 @@ function Optimizer() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    try { track('optimize_submit'); } catch {}
     setLoading(true);
     setOutput("");
     setToast("Optimization started…");
@@ -689,6 +692,8 @@ export default function App() {
 
   useEffect(() => {
     setHeadForRoute(route);
+    // Track SPA page views on initial load and route changes
+    try { track('pageview', { path: route }); } catch {}
   }, [route]);
 
   if (route.startsWith("/optimize")) return <Optimizer />;
