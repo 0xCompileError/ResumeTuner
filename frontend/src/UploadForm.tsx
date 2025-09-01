@@ -107,7 +107,7 @@ const ResumeTunerApp = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6 relative" aria-busy={loading}>
-      {/* Replace Vite favicon or tab logo in index.html with maltese.png, do not show it in the UI */}
+      {/* Favicon is set to vite.svg in index.html; no UI display needed */}
 
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-4xl font-bold tracking-tight text-center">ResumeTuner</h1>

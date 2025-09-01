@@ -1,0 +1,13 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        { "type": "host", "value": "resumetuner.app" }
+      ],
+      "destination": "https://www.resumetuner.app/:path*",
+      "permanent": true
+    }
+  ]
+}
+
