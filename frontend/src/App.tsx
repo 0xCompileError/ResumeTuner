@@ -90,7 +90,7 @@ function HowItWorks() {
         <h2 id="how-title" className="section-title">How it works</h2>
         <ol className="steps">
           <li>
-            <strong>Paste job description:</strong> paste the full job post or a link.
+            <strong>Paste job description:</strong> paste the full job post.
           </li>
           <li>
             <strong>Add your resume:</strong> paste your resume text.
