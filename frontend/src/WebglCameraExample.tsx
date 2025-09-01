@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import * as THREE from "three";
 
 export default function WebglCameraExample() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -6,13 +7,7 @@ export default function WebglCameraExample() {
 
   useEffect(() => {
     let stopped = false;
-    (async () => {
-      try {
-        const THREE: any = await import(
-          "https://unpkg.com/three@0.154.0/build/three.module.js"
-        );
-
-        if (!containerRef.current || stopped) return;
+    if (!containerRef.current || stopped) return;
 
         let width = containerRef.current.clientWidth;
         let height = Math.max(240, Math.floor(width * 0.5));
@@ -165,10 +160,6 @@ export default function WebglCameraExample() {
             renderer.domElement.parentNode.removeChild(renderer.domElement);
           }
         };
-      } catch (e) {
-        // fail silently if CDN blocked
-      }
-    })();
 
     return () => cleanupRef.current?.();
   }, []);
