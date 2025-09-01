@@ -125,7 +125,7 @@ async def _run_resume_pipeline(
             {"role": "system", "content": prompts.job_description_analysis_prompt},
             {"role": "user", "content": f"Job:\n{job_text}"},
         ],
-        temperature=0.2,
+        #temperature=0.2,
     )
     job_analysis = step1.choices[0].message.content
     logger.info("Step 1: Job Description Analysis Complete")
@@ -140,7 +140,7 @@ async def _run_resume_pipeline(
                 "content": f"Current Resume:\n{resume_text}\n\nJob Description Analysis:\n{job_analysis}",
             },
         ],
-        temperature=0.2,
+        #temperature=0.2,
     )
     matching_analysis = step2.choices[0].message.content
     logger.info("Step 2: Resume Matching Complete")
@@ -155,7 +155,7 @@ async def _run_resume_pipeline(
                 "content": f"Current Resume:\n{resume_text}\n\nJob Description Analysis:\n{job_analysis}\n\nResume Matching Insights:\n{matching_analysis}",
             },
         ],
-        temperature=0.2,
+        #temperature=0.2,
     )
     summary_skills = step3.choices[0].message.content
     logger.info("Step 3: Summary & Skills Rewrite Complete")
@@ -173,7 +173,7 @@ async def _run_resume_pipeline(
                 "content": f"Current Resume:\n{resume_text}\n\nJob Description Analysis:\n{job_analysis}\n\nResume Matching Insights:\n{matching_analysis}",
             },
         ],
-        temperature=0.2,
+        #temperature=0.2,
     )
     experience_section = step4.choices[0].message.content
     logger.info("Step 4: Experience Rewrite Complete")
@@ -188,7 +188,7 @@ async def _run_resume_pipeline(
                 "content": f"Summary and Skills section:\n{summary_skills}\n\nExperience section:\n{experience_section}",
             },
         ],
-        temperature=0.2,
+        #temperature=0.2,
     )
     final_resume = step5.choices[0].message.content
     logger.info("Step 5: Resume Assembly Complete")
@@ -203,7 +203,7 @@ async def _run_resume_pipeline(
                 "content": f"Full Resume:\n{final_resume}\n\nJob Description Analysis:\n{job_analysis}",
             },
         ],
-        temperature=0.2,
+        #temperature=0.2,
     )
     optimized_resume = step6.choices[0].message.content
     logger.info("Step 6: Final Optimization Complete")
