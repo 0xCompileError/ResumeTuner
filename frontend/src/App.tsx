@@ -1,10 +1,143 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import "./App.css";
 import Toast from "./Toast";
 import { ClipLoader } from "react-spinners";
-import WebglCameraExample from "./WebglCameraExample";
+const WebglCameraExample = lazy(() => import("./WebglCameraExample"));
 
 const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+const SITE_ORIGIN = "https://www.resumetuner.app";
+
+function setHeadForRoute(route: string) {
+  const meta = {
+    "/": {
+      title: "ResumeTuner — Tailor your resume to any job",
+      description:
+        "Paste a job description and your resume. Our AI tailors bullets, summary, and keywords so you pass ATS screens and catch recruiter attention.",
+    },
+    "/how": {
+      title: "How ResumeTuner works — AI resume optimization",
+      description:
+        "See how ResumeTuner aligns your resume to a specific job: analysis, rewrite suggestions, and ATS-optimized output.",
+    },
+    "/example": {
+      title: "Resume before & after — targeted rewrite example",
+      description:
+        "Compare a generic resume vs. a targeted version for a Senior Frontend Engineer role and see why it ranks better.",
+    },
+    "/faq": {
+      title: "ResumeTuner FAQ — accuracy, ATS, pricing",
+      description:
+        "Answers to common questions about ResumeTuner’s AI resume optimization, accuracy, and how to get the best results.",
+    },
+    "/optimize": {
+      title: "Optimize your resume — ResumeTuner",
+      description:
+        "Paste your resume and a job description; get tailored bullets, summary, and keywords that align with recruiter and ATS scans.",
+    },
+  } as Record<string, { title: string; description: string }>;
+
+  const match = meta[route] ?? meta["/"];
+  const canonical = `${SITE_ORIGIN}${route === "/" ? "/" : route}`;
+  const image = `${SITE_ORIGIN}/og-image.png`;
+  // Title
+  if (typeof document !== "undefined") {
+    document.title = match.title;
+    // Meta description
+    let desc = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    if (!desc) {
+      desc = document.createElement("meta");
+      desc.setAttribute("name", "description");
+      document.head.appendChild(desc);
+    }
+    desc.setAttribute("content", match.description);
+
+    // Canonical
+    let canon = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canon) {
+      canon = document.createElement("link");
+      canon.setAttribute("rel", "canonical");
+      document.head.appendChild(canon);
+    }
+    canon.setAttribute("href", canonical);
+
+    // Open Graph
+    const setOg = (p: string, v: string) => {
+      let el = document.querySelector(`meta[property="${p}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("property", p);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", v);
+    };
+    setOg("og:url", canonical);
+    setOg("og:title", match.title);
+    setOg("og:description", match.description);
+    setOg("og:image", image);
+
+    // Twitter
+    const setTw = (n: string, v: string) => {
+      let el = document.querySelector(`meta[name="${n}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("name", n);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", v);
+    };
+    setTw("twitter:title", match.title);
+    setTw("twitter:description", match.description);
+    setTw("twitter:image", image);
+
+    // JSON-LD per route (minimal)
+    const existing = document.getElementById("ldjson-route");
+    const script = existing || Object.assign(document.createElement("script"), { type: "application/ld+json", id: "ldjson-route" });
+    let jsonLd: any = null;
+    if (route === "/") {
+      jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        name: "ResumeTuner",
+        url: canonical,
+        applicationCategory: "Productivity",
+        operatingSystem: "Web",
+        description: match.description,
+      };
+    } else if (route === "/faq") {
+      jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "What does this tool do?",
+            acceptedAnswer: { "@type": "Answer", text: "It tailors your resume to a specific job by rewriting bullets, highlighting relevant skills, and improving keyword coverage for ATS." },
+          },
+          {
+            "@type": "Question",
+            name: "Will it make things up?",
+            acceptedAnswer: { "@type": "Answer", text: "No. You approve every change and can copy only what you want." },
+          },
+        ],
+      };
+    }
+    if (jsonLd) {
+      script.textContent = JSON.stringify(jsonLd);
+      if (!existing) document.head.appendChild(script);
+    } else if (existing) {
+      existing.remove();
+    }
+  }
+}
+
+function isInternalHref(href: string) {
+  try {
+    const u = new URL(href, window.location.origin);
+    return u.origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
 
 type OptimizeResponse = {
   output?: string;
@@ -16,11 +149,12 @@ type OptimizeResponse = {
 function Nav() {
   return (
     <nav className="topnav" aria-label="Primary">
-      <a href="#/" className="brand" aria-label="Go to home">ResumeTuner</a>
+      <a href="/" className="brand" aria-label="Go to home">ResumeTuner</a>
       <div className="links">
-        <a href="#/how" className="link">How it works</a>
-        <a href="#/example" className="link">See an example</a>
-        <a href="#/faq" className="link">FAQ</a>
+        <a href="/how" className="link">How it works</a>
+        <a href="/example" className="link">See an example</a>
+        <a href="/faq" className="link">FAQ</a>
+        <a href="/ai-resume-optimizer" className="link">AI Resume Optimizer</a>
       </div>
     </nav>
   );
@@ -50,7 +184,7 @@ function Landing() {
         </p>
         <div className="hero-actions">
           <a
-            href="#/optimize"
+            href="/optimize"
             className="cta-primary-lift"
             aria-label="Go to optimizer"
           >
@@ -74,7 +208,7 @@ function Landing() {
           </a>
         </div>
       </header>
-      <WebglCameraExample />
+      <LazyWebgl />
     </div>
   );
 }
@@ -84,7 +218,7 @@ function HowItWorks() {
     <div className="page">
       <Nav />
       <header className="hero" style={{ marginBottom: 6 }}>
-        <a href="#/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
       </header>
       <section className="section hiw" aria-labelledby="how-title">
         <h2 id="how-title" className="section-title">How it works</h2>
@@ -110,7 +244,7 @@ function FAQ() {
     <div className="page">
       <Nav />
       <header className="hero" style={{ marginBottom: 6 }}>
-        <a href="#/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
       </header>
       <section className="section faq" aria-labelledby="faq-title">
         <h2 id="faq-title" className="section-title">FAQ</h2>
@@ -192,7 +326,7 @@ function Optimizer() {
   return (
     <div className="page">
       <header className="hero" style={{ marginBottom: 6 }}>
-        <a href="#/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
         <h1 className="hero-title">Optimize your resume</h1>
         <p className="hero-sub">Paste the job description and your resume. Approve the suggestions you like.</p>
       </header>
@@ -311,7 +445,7 @@ function Example() {
     <div className="page">
       <Nav />
       <header className="hero" style={{ marginBottom: 6 }}>
-        <a href="#/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
         <h1 className="hero-title">Before and after: resume upgrade</h1>
         <p className="hero-sub">A focused rewrite aligned to a Senior Frontend Engineer (React/TypeScript) posting.</p>
       </header>
@@ -386,17 +520,218 @@ Projects
   );
 }
 
+function AiResumeOptimizerPage() {
+  return (
+    <div className="page">
+      <Nav />
+      <header className="hero" style={{ marginBottom: 6 }}>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <h1 className="hero-title">AI Resume Optimizer — Pass ATS and Impress Recruiters</h1>
+        <p className="hero-sub">Optimize your resume for a specific job posting with keyword alignment, quantified achievements, and clean structure that machines and humans scan fast.</p>
+      </header>
+
+      <section className="section" aria-labelledby="why-ats-title">
+        <h2 id="why-ats-title" className="section-title">Why optimize for ATS?</h2>
+        <p>
+          Most hiring pipelines start with Applicant Tracking Systems (ATS). Matching the language of the job post — tools, skills, and responsibilities — increases your search match, surfaces your profile to recruiters, and prevents qualified resumes from being filtered out.
+        </p>
+        <ul className="delta-list">
+          <li><strong>Keyword coverage:</strong> Map your skills to the exact stack listed in the role.</li>
+          <li><strong>Readable structure:</strong> Clean sections and consistent bullets for fast scanning.</li>
+          <li><strong>Measurable impact:</strong> Highlight metrics that prove outcomes, not tasks.</li>
+        </ul>
+      </section>
+
+      <section className="section" aria-labelledby="how-title-ai">
+        <h2 id="how-title-ai" className="section-title">How ResumeTuner’s AI works</h2>
+        <ol className="steps">
+          <li><strong>Analyze the job:</strong> extract required skills, responsibilities, and seniority signals.</li>
+          <li><strong>Align your resume:</strong> rewrite summary, skills, and bullets — truthfully.</li>
+          <li><strong>Optimize for screeners:</strong> structure and phrasing tuned for ATS + recruiters.</li>
+        </ol>
+      </section>
+
+      <section className="section" aria-labelledby="cta-ai">
+        <h2 id="cta-ai" className="section-title">Try it free</h2>
+        <p><a className="cta primary" href="/optimize" aria-label="Go to optimizer">Optimize your resume →</a></p>
+      </section>
+    </div>
+  );
+}
+
+function AtsResumePage() {
+  return (
+    <div className="page">
+      <Nav />
+      <header className="hero" style={{ marginBottom: 6 }}>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <h1 className="hero-title">ATS Resume Optimizer — Increase Your Match Rate</h1>
+        <p className="hero-sub">Tailor your resume for screening algorithms by mirroring the role’s terminology, organizing sections for easy parsing, and maintaining accuracy.</p>
+      </header>
+      <section className="section" aria-labelledby="ats-features">
+        <h2 id="ats-features" className="section-title">What you’ll improve</h2>
+        <ul className="delta-list">
+          <li><strong>Skills mapping:</strong> ensure role-specific keywords (frameworks, tools, platforms).</li>
+          <li><strong>Bullet clarity:</strong> action → scope → impact; one outcome per line.</li>
+          <li><strong>Consistency:</strong> tense, punctuation, and headings standardized.</li>
+        </ul>
+      </section>
+      <section className="section" aria-labelledby="ats-cta">
+        <h2 id="ats-cta" className="section-title">Get started</h2>
+        <p><a className="cta primary" href="/optimize">Optimize for ATS →</a></p>
+      </section>
+    </div>
+  );
+}
+
+function KeywordsAnalyzerPage() {
+  return (
+    <div className="page">
+      <Nav />
+      <header className="hero" style={{ marginBottom: 6 }}>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <h1 className="hero-title">Resume Keywords Analyzer — Match The Job Description</h1>
+        <p className="hero-sub">Identify missing or weak keywords, map phrasing to the job post, and strengthen your resume’s relevance without fabricating experience.</p>
+      </header>
+      <section className="section" aria-labelledby="kw-how">
+        <h2 id="kw-how" className="section-title">What you’ll get</h2>
+        <ul className="delta-list">
+          <li><strong>Missing keywords report:</strong> terms to add or reinforce.</li>
+          <li><strong>Phrasing suggestions:</strong> swap generic wording for language from the post.</li>
+          <li><strong>Section guidance:</strong> where to update summary, skills, and bullets.</li>
+        </ul>
+      </section>
+      <section className="section" aria-labelledby="kw-cta">
+        <h2 id="kw-cta" className="section-title">Analyze your resume</h2>
+        <p><a className="cta primary" href="/optimize">Run keyword analysis →</a></p>
+      </section>
+    </div>
+  );
+}
+
+function AchievementsGeneratorPage() {
+  return (
+    <div className="page">
+      <Nav />
+      <header className="hero" style={{ marginBottom: 6 }}>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <h1 className="hero-title">Resume Achievements Generator — Turn Work Into Impact</h1>
+        <p className="hero-sub">Convert responsibilities into quantified bullets that highlight scope, action, and measurable outcomes — without inventing facts.</p>
+      </header>
+      <section className="section" aria-labelledby="achv-how">
+        <h2 id="achv-how" className="section-title">How to write high-impact bullets</h2>
+        <ul className="delta-list">
+          <li><strong>Pattern:</strong> Action → Scope → Result (with a metric).</li>
+          <li><strong>Clarity:</strong> One outcome per line; start with a strong verb.</li>
+          <li><strong>Proof:</strong> Use % change, time saved, revenue, reliability, or error rates.</li>
+        </ul>
+      </section>
+      <section className="section" aria-labelledby="achv-cta">
+        <h2 id="achv-cta" className="section-title">Generate achievement bullets</h2>
+        <p><a className="cta primary" href="/optimize">Create quantified bullets →</a></p>
+      </section>
+    </div>
+  );
+}
+
+function SoftwareEngineerOptimizerPage() {
+  return (
+    <div className="page">
+      <Nav />
+      <header className="hero" style={{ marginBottom: 6 }}>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <h1 className="hero-title">Software Engineer Resume Optimizer — Stand Out to Hiring Teams</h1>
+        <p className="hero-sub">Show impact and technical depth: align with the team’s stack, highlight performance, reliability, and DX wins, and surface leadership signals.</p>
+      </header>
+      <section className="section" aria-labelledby="se-focus">
+        <h2 id="se-focus" className="section-title">What hiring teams look for</h2>
+        <ul className="delta-list">
+          <li><strong>Stack alignment:</strong> languages, frameworks, and tooling that match the JD.</li>
+          <li><strong>Impact metrics:</strong> latency, throughput, reliability, cost, or developer velocity.</li>
+          <li><strong>Ownership:</strong> migrations, design systems, observability, SLOs, and experiments.</li>
+        </ul>
+      </section>
+      <section className="section" aria-labelledby="se-cta">
+        <h2 id="se-cta" className="section-title">Optimize your engineering resume</h2>
+        <p><a className="cta primary" href="/optimize">Tune for engineering roles →</a></p>
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
-  const [route, setRoute] = useState<string>(window.location.hash || "#/");
+  const [route, setRoute] = useState<string>(typeof window !== "undefined" ? window.location.pathname || "/" : "/");
+
   useEffect(() => {
-    const onHashChange = () => setRoute(window.location.hash || "#/");
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
+    const onPop = () => setRoute(window.location.pathname || "/");
+    window.addEventListener("popstate", onPop);
+
+    const onClick = (e: Event) => {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      const anchor = t.closest && (t.closest("a") as HTMLAnchorElement | null);
+      if (!anchor || !anchor.getAttribute) return;
+      const href = anchor.getAttribute("href") || "";
+      if (!href || href.startsWith("http") || href.startsWith("mailto:")) return;
+      if (!isInternalHref(href)) return;
+      // Only handle same-origin internal links
+      e.preventDefault();
+      window.history.pushState({}, "", href);
+      setRoute(window.location.pathname || "/");
+    };
+    document.addEventListener("click", onClick);
+    setHeadForRoute(window.location.pathname || "/");
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      document.removeEventListener("click", onClick);
+    };
   }, []);
 
-  if (route.startsWith("#/optimize")) return <Optimizer />;
-  if (route.startsWith("#/how")) return <HowItWorks />;
-  if (route.startsWith("#/example")) return <Example />;
-  if (route.startsWith("#/faq")) return <FAQ />;
+  useEffect(() => {
+    setHeadForRoute(route);
+  }, [route]);
+
+  if (route.startsWith("/optimize")) return <Optimizer />;
+  if (route.startsWith("/how")) return <HowItWorks />;
+  if (route.startsWith("/example")) return <Example />;
+  if (route.startsWith("/faq")) return <FAQ />;
+  if (route.startsWith("/ai-resume-optimizer")) return <AiResumeOptimizerPage />;
+  if (route.startsWith("/ats-resume-optimizer")) return <AtsResumePage />;
+  if (route.startsWith("/resume-keywords-analyzer")) return <KeywordsAnalyzerPage />;
+  if (route.startsWith("/resume-ats-checker")) return <AtsResumePage />;
+  if (route.startsWith("/resume-achievements-generator")) return <AchievementsGeneratorPage />;
+  if (route.startsWith("/software-engineer-resume-optimizer")) return <SoftwareEngineerOptimizerPage />;
   return <Landing />;
+}
+
+function LazyWebgl() {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setVisible(true);
+            io.disconnect();
+            break;
+          }
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div ref={ref}>
+      {visible ? (
+        <Suspense fallback={null}>
+          <WebglCameraExample />
+        </Suspense>
+      ) : null}
+    </div>
+  );
 }

@@ -1,6 +1,6 @@
 # 🎯 ResumeTuner – AI-Powered Resume Optimizer
 
-**ResumeTuner** is a FastAPI-based backend service that uses OpenAI's GPT-4o-mini model to generate and optimize resumes tailored to specific job descriptions. It helps align resumes with modern hiring systems, including ATS (Applicant Tracking Systems), recruiter filters, and AI resume screeners.
+**ResumeTuner** is a FastAPI-based backend service that uses OpenAI's `gpt-5-nano` model to generate and optimize resumes tailored to specific job descriptions. It helps align resumes with modern hiring systems, including ATS (Applicant Tracking Systems), recruiter filters, and AI resume screeners.
 
 ✨ Resume generation from job posting using AI
 
