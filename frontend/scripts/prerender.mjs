@@ -106,7 +106,7 @@ const meta = {
 function injectHead(html, route) {
   const m = meta[route] || meta['/'];
   const canonical = `${SITE}${route === '/' ? '/' : route}`;
-  const image = `${SITE}/og-image.png`;
+  const image = `${SITE}/vite.svg`;
   // Replace title
   html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(m.title)}</title>`);
   // Replace or insert description

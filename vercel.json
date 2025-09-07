@@ -1,5 +1,9 @@
 {
   "trailingSlash": false,
+  "rewrites": [
+    { "source": "/favicon.ico", "destination": "/vite.svg" },
+    { "source": "/og-image.png", "destination": "/vite.svg" }
+  ],
   "redirects": [
     {
       "source": "/:path*",

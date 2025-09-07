@@ -39,7 +39,7 @@ function setHeadForRoute(route: string) {
 
   const match = meta[route] ?? meta["/"];
   const canonical = `${SITE_ORIGIN}${route === "/" ? "/" : route}`;
-  const image = `${SITE_ORIGIN}/og-image.png`;
+  const image = `${SITE_ORIGIN}/vite.svg`;
   // Title
   if (typeof document !== "undefined") {
     document.title = match.title;
