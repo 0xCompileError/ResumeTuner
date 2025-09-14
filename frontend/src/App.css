@@ -63,6 +63,20 @@ body {
 .topnav .link:hover { background: var(--btn-hover); border-color: var(--border); }
 .topnav .primary-link { border-color: var(--border); background: var(--btn); font-weight: 600; }
 
+/* Mobile nav tweaks: stack and allow multi-line labels */
+@media (max-width: 560px) {
+  .topnav { flex-direction: column; align-items: stretch; gap: 6px; }
+  .topnav .links { flex-wrap: wrap; gap: 8px; }
+  .topnav .brand { font-size: 0.98rem; }
+  .topnav .link {
+    white-space: normal; /* allow wrapping */
+    line-height: 1.2;
+    font-size: 0.95rem;
+    text-align: center;
+    flex: 1 1 calc(50% - 8px); /* aim for two per row on small screens */
+  }
+}
+
 /* Hero */
 .hero { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
 .hero.hero--room { padding-top: 4.5rem; }

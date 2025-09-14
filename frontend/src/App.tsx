@@ -152,10 +152,10 @@ function Nav() {
     <nav className="topnav" aria-label="Primary">
       <a href="/" className="brand" aria-label="Go to home">ResumeTuner</a>
       <div className="links">
-        <a href="/how" className="link">How it works</a>
-        <a href="/example" className="link">See an example</a>
+        <a href="/how" className="link">How it<wbr /> works</a>
+        <a href="/example" className="link">See an<wbr /> example</a>
         <a href="/faq" className="link">FAQ</a>
-        <a href="/ai-resume-optimizer" className="link">AI Resume Optimizer</a>
+        <a href="/ai-resume-optimizer" className="link">AI<wbr /> Resume<wbr /> Optimizer</a>
       </div>
     </nav>
   );
