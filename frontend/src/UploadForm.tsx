@@ -2,6 +2,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { ClipLoader } from "react-spinners";
 import Toast from "./Toast";
+import LoadingOverlay from "./LoadingOverlay";
 
 const ResumeTunerApp = () => {
   const API_BASE = (import.meta as any).env?.VITE_API_BASE || "/api";
@@ -198,19 +199,7 @@ const ResumeTunerApp = () => {
       </div>
       </div>
       <Toast message={toast} show={showToast} />
-      {loading && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Optimizing your resume">
-          <div className="bg-white text-gray-900 rounded-xl shadow-lg p-6 w-[92%] max-w-md text-center border border-gray-200">
-            <div className="mb-3 flex justify-center">
-              <ClipLoader size={28} color="#2563eb" />
-            </div>
-            <div className="text-lg font-semibold">Optimizing your resume…</div>
-            <div className="text-sm text-gray-600 mt-1">
-              This can take 30–90 seconds. Please don’t close the tab.
-            </div>
-          </div>
-        </div>
-      )}
+      <LoadingOverlay show={loading} />
     </div>
   );
 };

@@ -9,6 +9,9 @@ import logging
 import uuid
 import os
 from pydantic import BaseModel
+import re
+import tempfile
+from markitdown import MarkItDown
 
 from openai import AsyncOpenAI
 from prompts import ResumePrompts
@@ -56,6 +59,158 @@ app.add_middleware(
 
 # --- In-Memory File Store ---
 memory_store: Dict[str, str] = {}
+
+
+# --- Section Handling Utilities ---
+CANONICAL_HEADERS = {
+    "SUMMARY",
+    "SKILLS",
+    "EXPERIENCE",
+    "EDUCATION",
+    "CERTIFICATIONS",
+    "PROJECTS",
+}
+
+# Map common variants to canonical forms
+SECTION_ALIASES = {
+    "PROFESSIONAL EXPERIENCE": "EXPERIENCE",
+    "WORK EXPERIENCE": "EXPERIENCE",
+    "EXPERIENCE": "EXPERIENCE",
+    "SUMMARY": "SUMMARY",
+    "PROFESSIONAL SUMMARY": "SUMMARY",
+    "SKILLS": "SKILLS",
+    "CORE SKILLS": "SKILLS",
+    "TECHNICAL SKILLS": "SKILLS",
+    "EDUCATION": "EDUCATION",
+    "CERTIFICATION": "CERTIFICATIONS",
+    "CERTIFICATIONS": "CERTIFICATIONS",
+    "PROJECT": "PROJECTS",
+    "PROJECTS": "PROJECTS",
+}
+
+def _canon_header(line: str) -> Optional[str]:
+    name = re.sub(r"\s+", " ", (line or "").strip()).upper()
+    if name.endswith(":"):
+        name = name[:-1]
+    return SECTION_ALIASES.get(name)
+
+def _normalize_headers(text: str) -> str:
+    lines = (text or "").splitlines()
+    out: List[str] = []
+    for ln in lines:
+        canon = _canon_header(ln)
+        if canon:
+            out.append(canon)
+        else:
+            out.append(ln)
+    return "\n".join(out)
+
+def _split_into_sections(text: str):
+    """Return (preamble, [(header, content_str), ...]) preserving order.
+    Only known canonical or alias headers start sections; other ALL-CAPS headings are ignored.
+    """
+    text = text or ""
+    lines = text.splitlines()
+    preamble_lines: List[str] = []
+    sections: List[tuple[str, List[str]]] = []
+    current_header: Optional[str] = None
+    current_body: List[str] = []
+
+    def flush_current():
+        nonlocal current_header, current_body
+        if current_header is not None:
+            sections.append((current_header, current_body))
+        current_header, current_body = None, []
+
+    for ln in lines:
+        canon = _canon_header(ln)
+        if canon:
+            flush_current()
+            current_header = canon
+            current_body = []
+        else:
+            if current_header is None:
+                preamble_lines.append(ln)
+            else:
+                current_body.append(ln)
+
+    flush_current()
+    return "\n".join(preamble_lines).rstrip(), sections
+
+def _join_sections(preamble: str, sections: List[tuple[str, List[str]]]) -> str:
+    parts: List[str] = []
+    pre = (preamble or "").rstrip()
+    if pre:
+        parts.append(pre)
+    for hdr, body_lines in sections:
+        if parts:
+            parts.append("")  # blank line before each section
+        parts.append(hdr)
+        body = "\n".join(body_lines).rstrip()
+        if body:
+            parts.append(body)
+        else:
+            # leave section blank (no placeholders)
+            pass
+    return "\n".join(parts).rstrip() + "\n"
+
+def _original_section_presence(text: str) -> Dict[str, bool]:
+    t = _normalize_headers(text or "")
+    _, secs = _split_into_sections(t)
+    present = {h: False for h in CANONICAL_HEADERS}
+    for hdr, _ in secs:
+        present[hdr] = True
+    return present
+
+def enforce_section_policies(final_text: str, original_text: str) -> str:
+    """Enforce mandatory and conditional section rules deterministically.
+    - Always include SUMMARY, SKILLS, EXPERIENCE, EDUCATION
+    - Include CERTIFICATIONS/PROJECTS only if present in original
+    - If EDUCATION missing in original, keep header but force content blank
+    - Normalize header variants to canonical
+    """
+    normalized = _normalize_headers(final_text or "")
+    pre, sections = _split_into_sections(normalized)
+
+    # Build ordered dict of sections for easy updates
+    ordered: List[tuple[str, List[str]]] = []
+    seen = set()
+    for hdr, body in sections:
+        if hdr in seen:
+            # Merge duplicate headers by appending with a blank line
+            for i, (h, b) in enumerate(ordered):
+                if h == hdr:
+                    if b and body:
+                        b.append("")
+                    b.extend(body)
+                    break
+        else:
+            ordered.append((hdr, body[:]))
+            seen.add(hdr)
+
+    orig_presence = _original_section_presence(original_text or "")
+
+    # Remove conditional sections if not present originally
+    filtered: List[tuple[str, List[str]]] = []
+    for hdr, body in ordered:
+        if hdr in ("CERTIFICATIONS", "PROJECTS") and not orig_presence.get(hdr, False):
+            continue
+        filtered.append((hdr, body))
+
+    # Ensure mandatory sections exist
+    present_now = {hdr for hdr, _ in filtered}
+    for mandatory in ("SUMMARY", "SKILLS", "EXPERIENCE", "EDUCATION"):
+        if mandatory not in present_now:
+            filtered.append((mandatory, []))
+
+    # If EDUCATION absent in original, force blank content (header only)
+    if not orig_presence.get("EDUCATION", False):
+        filtered = [
+            (hdr, [] if hdr == "EDUCATION" else body) for hdr, body in filtered
+        ]
+
+    # Rebuild text
+    return _join_sections(pre, filtered)
 
 
 # --- Utility to extract job description from HTML ---
@@ -118,6 +273,9 @@ async def _run_resume_pipeline(
 ):
     prompts = ResumePrompts()
 
+    # Compute original section presence (for downstream prompts and enforcement)
+    orig_presence = _original_section_presence(resume_text)
+
     # --- Step 2: Analyze the Job Description ---
     step1 = await client.chat.completions.create(
         model="gpt-5-nano",
@@ -178,35 +336,91 @@ async def _run_resume_pipeline(
     experience_section = step4.choices[0].message.content
     logger.info("Step 4: Experience Rewrite Complete")
 
-    # --- Step 6: Assemble Final Resume ---
+    # --- Step 5: Education Formatting ---
     step5 = await client.chat.completions.create(
+        model="gpt-5-nano",
+        messages=[
+            {"role": "system", "content": prompts.resume_education_prompt},
+            {
+                "role": "user",
+                "content": f"Current Resume:\n{resume_text}\n\nJob Description Analysis:\n{job_analysis}",
+            },
+        ],
+    )
+    education_entries = (step5.choices[0].message.content or "").strip()
+    logger.info("Step 5: Education Section Formatting Complete")
+
+    # --- Step 6: Certifications Formatting ---
+    step6 = await client.chat.completions.create(
+        model="gpt-5-nano",
+        messages=[
+            {"role": "system", "content": prompts.resume_certifications_prompt},
+            {"role": "user", "content": f"Current Resume:\n{resume_text}"},
+        ],
+    )
+    certifications_entries = (step6.choices[0].message.content or "").strip()
+    logger.info("Step 6: Certifications Section Formatting Complete")
+
+    # --- Step 7: Assemble Final Resume ---
+    step7 = await client.chat.completions.create(
         model="gpt-5-nano",
         messages=[
             {"role": "system", "content": prompts.final_resume_assembly_prompt},
             {
                 "role": "user",
-                "content": f"Summary and Skills section:\n{summary_skills}\n\nExperience section:\n{experience_section}",
+                "content": (
+                    "Summary and Skills section:\n" + summary_skills +
+                    "\n\nExperience section:\n" + experience_section +
+                    ("\n\nEducation entries (one per line):\n" + education_entries if education_entries else "\n\nEducation entries: NONE") +
+                    ("\n\nCertification entries (one per line):\n" + certifications_entries if certifications_entries else "\n\nCertification entries: NONE") +
+                    "\n\nOriginal section presence (for strict policy):\n"
+                    f"- EDUCATION: {'YES' if orig_presence.get('EDUCATION') else 'NO'}\n"
+                    f"- CERTIFICATIONS: {'YES' if orig_presence.get('CERTIFICATIONS') else 'NO'}\n"
+                    f"- PROJECTS: {'YES' if orig_presence.get('PROJECTS') else 'NO'}\n"
+                ),
             },
         ],
         #temperature=0.2,
     )
-    final_resume = step5.choices[0].message.content
-    logger.info("Step 5: Resume Assembly Complete")
+    def sanitize_resume_output(text: str) -> str:
+        if not text:
+            return text
+        cleaned = text
+        # Remove placeholder-only sections like "EDUCATION\nDetails available upon request"
+        for section in ("EDUCATION", "CERTIFICATIONS"):
+            pattern = re.compile(
+                rf"(?ims)^({section})\s*\n(?:-\s*)?(?:details|information|info)\s+(?:available|upon)\s+request\.?\s*(?:\n\n|\Z)",
+                re.IGNORECASE | re.MULTILINE | re.DOTALL,
+            )
+            cleaned = pattern.sub("", cleaned)
+        return cleaned.strip()
 
-    # --- Step 7: Optimize for All Screeners ---
-    step6 = await client.chat.completions.create(
+    final_resume = sanitize_resume_output(step7.choices[0].message.content)
+    logger.info("Step 7: Resume Assembly Complete")
+
+    # --- Step 8: Optimize for All Screeners ---
+    step8 = await client.chat.completions.create(
         model="gpt-5-nano",
         messages=[
             {"role": "system", "content": prompts.final_resume_optimization_prompt},
             {
                 "role": "user",
-                "content": f"Full Resume:\n{final_resume}\n\nJob Description Analysis:\n{job_analysis}",
+                "content": (
+                    f"Full Resume (use EXACT headers):\n{final_resume}\n\n"
+                    f"Original section presence (for strict policy):\n"
+                    f"- EDUCATION: {'YES' if orig_presence.get('EDUCATION') else 'NO'}\n"
+                    f"- CERTIFICATIONS: {'YES' if orig_presence.get('CERTIFICATIONS') else 'NO'}\n"
+                    f"- PROJECTS: {'YES' if orig_presence.get('PROJECTS') else 'NO'}\n\n"
+                    f"Job Description Analysis:\n{job_analysis}"
+                ),
             },
         ],
         #temperature=0.2,
     )
-    optimized_resume = step6.choices[0].message.content
-    logger.info("Step 6: Final Optimization Complete")
+    optimized_resume = sanitize_resume_output(step8.choices[0].message.content)
+    # Enforce deterministic section policies irrespective of model behavior
+    optimized_resume = enforce_section_policies(optimized_resume, resume_text)
+    logger.info("Step 8: Final Optimization Complete")
 
     # --- Optional: LaTeX Formatting ---
     if latex:
@@ -320,3 +534,42 @@ async def optimize_json(payload: OptimizeRequest, request: Request, plain: bool 
         raise HTTPException(
             status_code=500, detail=f"Failed to optimize resume: {str(e)}"
         )
+
+
+# --- PDF → Markdown conversion endpoint ---
+@app.post("/convert/pdf-to-md")
+async def convert_pdf_to_markdown(file: UploadFile = File(...)):
+    try:
+        filename = (file.filename or "").lower()
+        content_type = (file.content_type or "").lower()
+        if not (filename.endswith(".pdf") or content_type == "application/pdf"):
+            raise HTTPException(status_code=400, detail="Please upload a PDF file.")
+
+        pdf_bytes = await file.read()
+        if not pdf_bytes:
+            raise HTTPException(status_code=400, detail="Empty file uploaded.")
+
+        # Write to a temporary file so MarkItDown can infer type reliably
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(pdf_bytes)
+            tmp_path = tmp.name
+
+        try:
+            md = MarkItDown()
+            result = md.convert(tmp_path)
+            text = getattr(result, "text_content", None) or ""
+        finally:
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+
+        if not text.strip():
+            raise HTTPException(status_code=422, detail="Could not extract text from PDF.")
+
+        return JSONResponse(content={"markdown": text})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("PDF to Markdown conversion failed.")
+        raise HTTPException(status_code=500, detail=f"Conversion error: {str(e)}")

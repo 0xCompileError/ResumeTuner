@@ -3,6 +3,7 @@ import "./App.css";
 import Toast from "./Toast";
 import { ClipLoader } from "react-spinners";
 import { track } from "@vercel/analytics";
+import LoadingOverlay from "./LoadingOverlay";
 const WebglCameraExample = lazy(() => import("./WebglCameraExample"));
 
 const API_BASE = import.meta.env.VITE_API_BASE || "/api";
@@ -283,10 +284,46 @@ function Optimizer() {
   const [job, setJob] = useState("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [converting, setConverting] = useState(false);
   const [toast, setToast] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
-  const canSubmit = resume.trim() && job.trim() && !loading;
+  const canSubmit = resume.trim() && job.trim() && !loading && !converting;
+
+  async function onUploadPdf(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      setToast("Please select a PDF file"); setShowToast(true); setTimeout(() => setShowToast(false), 1500);
+      return;
+    }
+    try { track('pdf_upload_attempt'); } catch {}
+    setConverting(true);
+    setToast("Converting PDF…"); setShowToast(true); setTimeout(() => setShowToast(false), 1500);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`${API_BASE}/convert/pdf-to-md`, { method: "POST", body: fd });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `Server error (${res.status})`);
+      }
+      const data = await res.json();
+      const md = data.markdown || "";
+      setResume(md);
+      setToast("PDF converted"); setShowToast(true); setTimeout(() => setShowToast(false), 1500);
+      try { track('pdf_upload_success'); } catch {}
+    } catch (err: any) {
+      setToast("PDF conversion failed"); setShowToast(true); setTimeout(() => setShowToast(false), 1800);
+      setOutput(`PDF conversion error: ${err?.message || 'Unknown error'}`);
+      try { track('pdf_upload_error'); } catch {}
+    } finally {
+      setConverting(false);
+      // clear file input value so same file can be reselected
+      e.target.value = '';
+    }
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -336,7 +373,27 @@ function Optimizer() {
 
       <form className="grid" onSubmit={onSubmit} aria-busy={loading}>
         <label className="field">
-          <span className="field-title">Your resume</span>
+          <div className="field-head">
+            <span className="field-title">Your resume</span>
+            <div>
+              <button
+                type="button"
+                className="link-btn"
+                onClick={() => pdfInputRef.current?.click()}
+                aria-label="Upload PDF resume to convert"
+                disabled={converting}
+              >
+                {converting ? "Converting…" : "Upload PDF"}
+              </button>
+              <input
+                ref={pdfInputRef}
+                type="file"
+                accept="application/pdf"
+                onChange={onUploadPdf}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
           <textarea
             className="textarea"
             placeholder="Paste your resume text"
@@ -344,10 +401,14 @@ function Optimizer() {
             onChange={(e) => setResume(e.target.value)}
             aria-label="Resume content"
           />
+          <div className="field-hint">Prefer a file? Upload a PDF and we’ll convert it to text automatically.</div>
         </label>
 
         <label className="field">
-          <span className="field-title">Job description</span>
+          <div className="field-head">
+            <span className="field-title">Job description</span>
+            <span />
+          </div>
           <textarea
             className="textarea"
             placeholder="Paste the job description"
@@ -401,44 +462,7 @@ function Optimizer() {
       )}
 
       <Toast message={toast} show={showToast} />
-      {loading && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            backdropFilter: "blur(2px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9998,
-          }}
-          aria-modal="true"
-          role="dialog"
-          aria-label="Optimizing your resume"
-        >
-          <div
-            style={{
-              background: "#111",
-              color: "#eee",
-              padding: "16px 20px",
-              borderRadius: 12,
-              border: "1px solid #2a2a2a",
-              textAlign: "center",
-              maxWidth: 360,
-              boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-            }}
-          >
-            <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
-              <ClipLoader size={26} color="#7aa2ff" />
-            </div>
-            <div style={{ fontWeight: 600 }}>Optimizing your resume…</div>
-            <div style={{ fontSize: 13, color: "#9aa0a6", marginTop: 4 }}>
-              This can take 30–90 seconds. Please don’t close the tab.
-            </div>
-          </div>
-        </div>
-      )}
+      <LoadingOverlay show={loading} />
     </div>
   );
 }
