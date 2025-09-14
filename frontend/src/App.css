@@ -440,3 +440,13 @@ body {
 @media (max-width: 900px) {
   .example-grid { grid-template-columns: 1fr; }
 }
+
+/* Footer */
+.footer { border-top: var(--border-w) solid var(--border); margin-top: 12px; padding: 18px 0 10px 0; color: var(--muted); }
+.footer-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.footer-brand { font-weight: 700; color: var(--text); }
+.footer-links { display: flex; gap: 12px; }
+.footer-links a { color: var(--muted); text-decoration: none; padding: 6px 8px; border-radius: 8px; }
+.footer-links a:hover { background: var(--btn-hover); color: var(--text); }
+.footer-copy { margin-top: 6px; font-size: 12.5px; }
+@media (max-width: 560px) { .footer-row { flex-direction: column; align-items: flex-start; } }

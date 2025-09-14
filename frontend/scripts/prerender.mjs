@@ -66,6 +66,31 @@ const meta = {
       ],
     },
   },
+  '/about': {
+    title: 'About — ResumeTuner',
+    description:
+      'Learn about ResumeTuner’s mission, approach, and the principles that guide our resume optimization tools.',
+  },
+  '/contact': {
+    title: 'Contact — ResumeTuner',
+    description:
+      'Get in touch with the ResumeTuner team for support, feedback, or partnerships.',
+  },
+  '/privacy': {
+    title: 'Privacy Policy — ResumeTuner',
+    description:
+      'How ResumeTuner handles data, privacy, and security when you use our tools.',
+  },
+  '/terms': {
+    title: 'Terms of Service — ResumeTuner',
+    description:
+      'The terms that govern your use of ResumeTuner and our services.',
+  },
+  '/resume-tuner': {
+    title: 'Resume Tuner — What it is and how to use it',
+    description:
+      'Understand what a resume tuner does, how it improves keyword alignment and ATS parsing, and how ResumeTuner helps you target any job.',
+  },
   '/optimize': {
     title: 'Optimize your resume — ResumeTuner',
     description:
@@ -181,7 +206,7 @@ async function main() {
     process.exit(1);
   }
   const baseHtml = await readFile(indexPath, 'utf8');
-  const routes = ['/', '/how', '/example', '/faq', '/optimize', '/ai-resume-optimizer', '/ats-resume-optimizer', '/resume-keywords-analyzer', '/resume-ats-checker', '/resume-achievements-generator', '/software-engineer-resume-optimizer'];
+  const routes = ['/', '/how', '/example', '/faq', '/optimize', '/ai-resume-optimizer', '/ats-resume-optimizer', '/resume-keywords-analyzer', '/resume-ats-checker', '/resume-achievements-generator', '/software-engineer-resume-optimizer', '/resume-tuner', '/about', '/contact', '/privacy', '/terms'];
   for (const route of routes) {
     const outHtml = injectHead(baseHtml, route);
     if (route === '/') {

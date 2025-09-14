@@ -15,6 +15,31 @@ function setHeadForRoute(route: string) {
       description:
         "Paste a job description and your resume. Our AI tailors bullets, summary, and keywords so you pass ATS screens and catch recruiter attention.",
     },
+    "/about": {
+      title: "About — ResumeTuner",
+      description:
+        "Learn about ResumeTuner’s mission, approach, and the principles that guide how we optimize resumes for real roles.",
+    },
+    "/contact": {
+      title: "Contact — ResumeTuner",
+      description:
+        "Get in touch with the ResumeTuner team for support, feedback, or partnership inquiries.",
+    },
+    "/privacy": {
+      title: "Privacy Policy — ResumeTuner",
+      description:
+        "How ResumeTuner handles data, privacy, and security when you use our resume optimization tools.",
+    },
+    "/terms": {
+      title: "Terms of Service — ResumeTuner",
+      description:
+        "The terms that govern your use of ResumeTuner, our website, and related services.",
+    },
+    "/resume-tuner": {
+      title: "Resume Tuner — What it is and how to use it",
+      description:
+        "Learn what a resume tuner is, how it improves keyword alignment and ATS parsing, and how ResumeTuner helps you target any job posting.",
+    },
     "/how": {
       title: "How ResumeTuner works — AI resume optimization",
       description:
@@ -152,12 +177,31 @@ function Nav() {
     <nav className="topnav" aria-label="Primary">
       <a href="/" className="brand" aria-label="Go to home">ResumeTuner</a>
       <div className="links">
+        <a href="/resume-tuner" className="link">Resume<wbr /> Tuner</a>
         <a href="/how" className="link">How it<wbr /> works</a>
         <a href="/example" className="link">See an<wbr /> example</a>
         <a href="/faq" className="link">FAQ</a>
         <a href="/ai-resume-optimizer" className="link">AI<wbr /> Resume<wbr /> Optimizer</a>
       </div>
     </nav>
+  );
+}
+
+function Footer() {
+  const year = new Date().getFullYear();
+  return (
+    <footer className="footer" role="contentinfo">
+      <div className="footer-row">
+        <div className="footer-brand">ResumeTuner</div>
+        <nav className="footer-links" aria-label="Footer">
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+        </nav>
+      </div>
+      <div className="footer-copy">© {year} ResumeTuner</div>
+    </footer>
   );
 }
 
@@ -211,6 +255,59 @@ function Landing() {
         </div>
       </header>
       <LazyWebgl />
+      <Footer />
+    </div>
+  );
+}
+
+function ResumeTunerInfoPage() {
+  return (
+    <div className="page">
+      <Nav />
+      <header className="hero" style={{ marginBottom: 6 }}>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <h1 className="hero-title">Resume Tuner — What it is, how it helps</h1>
+        <p className="hero-sub">A resume tuner is a tool that aligns your resume to a specific job by mirroring the language of the posting, improving keyword coverage, and keeping your content truthful and easy to scan for ATS and recruiters.</p>
+      </header>
+
+      <section className="section" aria-labelledby="rt-why">
+        <h2 id="rt-why" className="section-title">Why use a resume tuner?</h2>
+        <ul className="delta-list">
+          <li><strong>Keyword alignment:</strong> Match terminology from the job description so screeners don’t miss relevant skills.</li>
+          <li><strong>Parsing friendliness:</strong> Clear sections and consistent formatting improve ATS extraction.</li>
+          <li><strong>Evidence, not fluff:</strong> Translate tasks into quantified outcomes that hiring teams trust.</li>
+        </ul>
+      </section>
+
+      <section className="section" aria-labelledby="rt-how">
+        <h2 id="rt-how" className="section-title">How a resume tuner works</h2>
+        <ol className="steps">
+          <li><strong>Analyze the job post:</strong> identify required skills, responsibilities, and seniority signals.</li>
+          <li><strong>Map your experience:</strong> highlight relevant projects, tools, and outcomes without inventing facts.</li>
+          <li><strong>Rewrite for clarity:</strong> improve bullet structure (action → scope → result) and remove filler.</li>
+        </ol>
+        <p>
+          ResumeTuner does this automatically: paste your resume and the job post, then copy the tailored summary, skills, and experience sections. Learn more on <a href="/how">How it works</a> or try it now.
+        </p>
+        <p><a className="cta primary" href="/optimize" aria-label="Go to optimizer">Optimize my resume →</a></p>
+      </section>
+
+      <section className="section" aria-labelledby="rt-faq">
+        <h2 id="rt-faq" className="section-title">Resume Tuner FAQs</h2>
+        <div className="faq-item">
+          <div className="faq-q">Is a resume tuner the same as a chatbot?</div>
+          <div className="faq-a">No. A resume tuner uses purpose‑built prompts and structure to align your resume to a specific role, with outputs you can review and edit.</div>
+        </div>
+        <div className="faq-item">
+          <div className="faq-q">Will it fabricate experience?</div>
+          <div className="faq-a">No. You keep control. It rephrases and prioritizes what you already did, while discouraging unsupported claims.</div>
+        </div>
+        <div className="faq-item">
+          <div className="faq-q">Does it help with ATS?</div>
+          <div className="faq-a">Yes. Using consistent headers and job‑aligned keywords improves how Applicant Tracking Systems parse and score your resume.</div>
+        </div>
+      </section>
+      <Footer />
     </div>
   );
 }
@@ -237,6 +334,7 @@ function HowItWorks() {
           </li>
         </ol>
       </section>
+      <Footer />
     </div>
   );
 }
@@ -274,6 +372,7 @@ function FAQ() {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 }
@@ -462,6 +561,7 @@ function Optimizer() {
 
       <Toast message={toast} show={showToast} />
       <LoadingOverlay show={loading} />
+      <Footer />
     </div>
   );
 }
@@ -542,6 +642,7 @@ Projects
           <li><strong>Scope & leadership:</strong> System ownership, migrations, and cross‑team adoption evidence higher‑level impact.</li>
         </ul>
       </section>
+      <Footer />
     </div>
   );
 }
@@ -581,6 +682,7 @@ function AiResumeOptimizerPage() {
         <h2 id="cta-ai" className="section-title">Try it free</h2>
         <p><a className="cta primary" href="/optimize" aria-label="Go to optimizer">Optimize your resume →</a></p>
       </section>
+      <Footer />
     </div>
   );
 }
@@ -606,6 +708,7 @@ function AtsResumePage() {
         <h2 id="ats-cta" className="section-title">Get started</h2>
         <p><a className="cta primary" href="/optimize">Optimize for ATS →</a></p>
       </section>
+      <Footer />
     </div>
   );
 }
@@ -631,6 +734,7 @@ function KeywordsAnalyzerPage() {
         <h2 id="kw-cta" className="section-title">Analyze your resume</h2>
         <p><a className="cta primary" href="/optimize">Run keyword analysis →</a></p>
       </section>
+      <Footer />
     </div>
   );
 }
@@ -656,6 +760,7 @@ function AchievementsGeneratorPage() {
         <h2 id="achv-cta" className="section-title">Generate achievement bullets</h2>
         <p><a className="cta primary" href="/optimize">Create quantified bullets →</a></p>
       </section>
+      <Footer />
     </div>
   );
 }
@@ -681,6 +786,103 @@ function SoftwareEngineerOptimizerPage() {
         <h2 id="se-cta" className="section-title">Optimize your engineering resume</h2>
         <p><a className="cta primary" href="/optimize">Tune for engineering roles →</a></p>
       </section>
+      <Footer />
+    </div>
+  );
+}
+
+function AboutPage() {
+  return (
+    <div className="page">
+      <Nav />
+      <header className="hero" style={{ marginBottom: 6 }}>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <h1 className="hero-title">About ResumeTuner</h1>
+        <p className="hero-sub">We help candidates present truthful, relevant resumes aligned to specific job postings, readable by both ATS and recruiters.</p>
+      </header>
+      <section className="section" aria-labelledby="mission">
+        <h2 id="mission" className="section-title">Our approach</h2>
+        <p>ResumeTuner focuses on clarity, keyword alignment, and measurable impact. We encourage accurate representation and discourage fabricated claims. The product aims to save time while improving match quality and recruiter readability.</p>
+      </section>
+      <section className="section" aria-labelledby="values">
+        <h2 id="values" className="section-title">Principles</h2>
+        <ul className="delta-list">
+          <li><strong>Truthful:</strong> elevate your real experience—never invent it.</li>
+          <li><strong>Useful:</strong> produce outputs you can copy as‑is.</li>
+          <li><strong>Private:</strong> process inputs only to generate your results.</li>
+        </ul>
+      </section>
+      <Footer />
+    </div>
+  );
+}
+
+function ContactPage() {
+  return (
+    <div className="page">
+      <Nav />
+      <header className="hero" style={{ marginBottom: 6 }}>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <h1 className="hero-title">Contact</h1>
+        <p className="hero-sub">Questions, feedback, or partnership ideas? We’d love to hear from you.</p>
+      </header>
+      <section className="section" aria-labelledby="contact-email">
+        <h2 id="contact-email" className="section-title">Email</h2>
+        <p>Reach us at <a href="mailto:hello@resumetuner.app">hello@resumetuner.app</a>.</p>
+      </section>
+      <Footer />
+    </div>
+  );
+}
+
+function PrivacyPage() {
+  return (
+    <div className="page">
+      <Nav />
+      <header className="hero" style={{ marginBottom: 6 }}>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <h1 className="hero-title">Privacy Policy</h1>
+        <p className="hero-sub">Your data is yours. We aim to collect the minimum necessary and use it only to provide the service.</p>
+      </header>
+      <section className="section" aria-labelledby="data">
+        <h2 id="data" className="section-title">Data handling</h2>
+        <ul className="delta-list">
+          <li>Inputs you paste or upload are processed to generate results.</li>
+          <li>We do not sell personal data.</li>
+          <li>We store only what’s needed to operate and improve the product.</li>
+        </ul>
+      </section>
+      <section className="section" aria-labelledby="contact-privacy">
+        <h2 id="contact-privacy" className="section-title">Questions</h2>
+        <p>Contact <a href="mailto:hello@resumetuner.app">hello@resumetuner.app</a>.</p>
+      </section>
+      <Footer />
+    </div>
+  );
+}
+
+function TermsPage() {
+  return (
+    <div className="page">
+      <Nav />
+      <header className="hero" style={{ marginBottom: 6 }}>
+        <a href="/" className="cta secondary" aria-label="Back to home">← Back</a>
+        <h1 className="hero-title">Terms of Service</h1>
+        <p className="hero-sub">These terms govern your use of ResumeTuner.</p>
+      </header>
+      <section className="section" aria-labelledby="use">
+        <h2 id="use" className="section-title">Use of service</h2>
+        <ul className="delta-list">
+          <li>Do not submit unlawful, harmful, or infringing content.</li>
+          <li>Outputs may require human review. You are responsible for your final resume.</li>
+          <li>The service is provided “as is”, without warranty.</li>
+        </ul>
+      </section>
+      <section className="section" aria-labelledby="updates">
+        <h2 id="updates" className="section-title">Updates</h2>
+        <p>We may update these terms as the product evolves. Continued use constitutes acceptance of changes.</p>
+      </section>
+      <Footer />
     </div>
   );
 }
@@ -723,6 +925,11 @@ export default function App() {
   if (route.startsWith("/how")) return <HowItWorks />;
   if (route.startsWith("/example")) return <Example />;
   if (route.startsWith("/faq")) return <FAQ />;
+  if (route.startsWith("/about")) return <AboutPage />;
+  if (route.startsWith("/contact")) return <ContactPage />;
+  if (route.startsWith("/privacy")) return <PrivacyPage />;
+  if (route.startsWith("/terms")) return <TermsPage />;
+  if (route.startsWith("/resume-tuner")) return <ResumeTunerInfoPage />;
   if (route.startsWith("/ai-resume-optimizer")) return <AiResumeOptimizerPage />;
   if (route.startsWith("/ats-resume-optimizer")) return <AtsResumePage />;
   if (route.startsWith("/resume-keywords-analyzer")) return <KeywordsAnalyzerPage />;
