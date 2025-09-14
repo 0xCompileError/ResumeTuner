@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import "./App.css";
 import Toast from "./Toast";
-import { ClipLoader } from "react-spinners";
 import { track } from "@vercel/analytics";
 import LoadingOverlay from "./LoadingOverlay";
 const WebglCameraExample = lazy(() => import("./WebglCameraExample"));
